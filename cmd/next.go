@@ -12,7 +12,7 @@ var nextCmd = &cobra.Command{
 	Aliases: []string{"n"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
-			return t.Status == model.StatusActive
+			return t.IsActive()
 		})
 		if err != nil {
 			return err

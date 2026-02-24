@@ -1,0 +1,27 @@
+package cmd
+
+import (
+	"github.com/nickhudkins/tk/model"
+	"github.com/spf13/cobra"
+)
+
+var pickAll bool
+
+var pickCmd = &cobra.Command{
+	Use:   "pick",
+	Short: "Interactive task picker with actions (looping fzf)",
+	Aliases: []string{"i"},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return fzfPick(func(t *model.Task) bool {
+			if pickAll {
+				return t.Status != model.StatusArchived
+			}
+			return t.IsActive()
+		})
+	},
+}
+
+func init() {
+	pickCmd.Flags().BoolVar(&pickAll, "all", false, "Include done tasks")
+	rootCmd.AddCommand(pickCmd)
+}

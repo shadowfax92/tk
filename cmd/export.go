@@ -17,38 +17,27 @@ var exportCmd = &cobra.Command{
 			return err
 		}
 
-		var inbox, active, done, archived []*model.Task
+		grouped := map[string][]*model.Task{}
 		for _, t := range tasks {
-			switch t.Status {
-			case model.StatusInbox:
-				inbox = append(inbox, t)
-			case model.StatusActive:
-				active = append(active, t)
-			case model.StatusDone:
-				done = append(done, t)
-			case model.StatusArchived:
-				archived = append(archived, t)
-			}
+			grouped[t.Status] = append(grouped[t.Status], t)
 		}
 
 		fmt.Println("# Tasks")
 		fmt.Println()
 
-		if len(active) > 0 {
-			fmt.Println("## Active")
-			printSection(active)
+		sections := []struct{ status, label string }{
+			{model.StatusNow, "Now"},
+			{model.StatusNext, "Next"},
+			{model.StatusTodo, "Todo"},
+			{model.StatusInbox, "Inbox"},
+			{model.StatusDone, "Done"},
+			{model.StatusArchived, "Archived"},
 		}
-		if len(inbox) > 0 {
-			fmt.Println("## Inbox")
-			printSection(inbox)
-		}
-		if len(done) > 0 {
-			fmt.Println("## Done")
-			printSection(done)
-		}
-		if len(archived) > 0 {
-			fmt.Println("## Archived")
-			printSection(archived)
+		for _, s := range sections {
+			if len(grouped[s.status]) > 0 {
+				fmt.Printf("## %s\n", s.label)
+				printSection(grouped[s.status])
+			}
 		}
 
 		return nil

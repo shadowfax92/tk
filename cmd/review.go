@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/nickhudkins/tk/model"
@@ -14,11 +13,10 @@ import (
 
 var reviewCmd = &cobra.Command{
 	Use:   "review",
-	Short: "Review and clean up stale tasks (fzf multi-select to archive/delete)",
+	Short: "Review stale tasks — archive, delete, or re-confirm",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
-			return (t.Status == model.StatusInbox || t.Status == model.StatusActive) &&
-				t.DaysSinceUpdate() > cfg.StaleWarnDays
+			return t.IsActive() && t.DaysSinceUpdate() > cfg.StaleWarnDays
 		})
 		if err != nil {
 			return err
@@ -37,16 +35,23 @@ var reviewCmd = &cobra.Command{
 			return nil
 		}
 
-		// fzf multi-select stale tasks to archive
 		var lines []string
 		for _, t := range tasks {
 			line := fmt.Sprintf("%d\t%s", t.ID, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
 			lines = append(lines, line)
 		}
 
+		previewCmd := fmt.Sprintf(
+			`cat "$(printf '%%s/%%03d.md' '%s' {1})" 2>/dev/null | tail -n +2`,
+			strings.ReplaceAll(st.Root, "'", "'\\''"),
+		)
+
 		fzf := exec.Command("fzf", "--ansi", "--multi",
-			"--header", "Select stale tasks to ARCHIVE (TAB to multi-select, ENTER to confirm, ESC to skip)",
+			"--header", "Select stale tasks to ARCHIVE (TAB=multi-select, ENTER=confirm, ESC=skip)",
 			"--with-nth", "2..",
+			"--delimiter", "\t",
+			"--preview", previewCmd,
+			"--preview-window", "right:50%:wrap",
 		)
 		fzf.Stdin = strings.NewReader(strings.Join(lines, "\n"))
 		fzf.Stderr = os.Stderr
@@ -62,30 +67,8 @@ var reviewCmd = &cobra.Command{
 			return nil
 		}
 
-		count := 0
-		for _, line := range strings.Split(selected, "\n") {
-			parts := strings.SplitN(line, "\t", 2)
-			if len(parts) == 0 {
-				continue
-			}
-			id, err := strconv.Atoi(strings.TrimSpace(parts[0]))
-			if err != nil {
-				continue
-			}
-
-			t, err := st.Get(id)
-			if err != nil {
-				continue
-			}
-			t.Status = model.StatusArchived
-			if err := st.Save(t); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to archive #%d: %v\n", id, err)
-				continue
-			}
-			count++
-		}
-
-		fmt.Printf("Archived %d stale tasks.\n", count)
+		ids := extractIDs(strings.Split(selected, "\n"))
+		batchSetStatus(ids, model.StatusArchived, "Archived")
 		return nil
 	},
 }

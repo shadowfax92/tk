@@ -10,7 +10,8 @@ import (
 
 var promoteCmd = &cobra.Command{
 	Use:   "promote <id>",
-	Short: "Move a task from inbox to active",
+	Short: "Advance a task to the next status (inbox→todo→next→now→done)",
+	Aliases: []string{"adv"},
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])
@@ -21,14 +22,16 @@ var promoteCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("task #%d not found", id)
 		}
-		if t.Status != model.StatusInbox {
-			return fmt.Errorf("task #%d is already %s", id, t.Status)
+		next := model.Advance(t.Status)
+		if next == "" {
+			return fmt.Errorf("task #%d is already %s (terminal)", id, t.Status)
 		}
-		t.Status = model.StatusActive
+		prev := t.Status
+		t.Status = next
 		if err := st.Save(t); err != nil {
 			return err
 		}
-		fmt.Printf("Promoted #%d: %s → active\n", t.ID, t.Title)
+		fmt.Printf("#%d: %s → %s (%s)\n", t.ID, prev, next, t.Title)
 		return nil
 	},
 }

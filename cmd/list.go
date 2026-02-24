@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/nickhudkins/tk/model"
 	"github.com/nickhudkins/tk/render"
@@ -12,14 +10,15 @@ import (
 )
 
 var (
-	listInbox bool
-	listAll   bool
-	listStale bool
+	listInbox  bool
+	listAll    bool
+	listStale  bool
+	listStatus string
 )
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List tasks",
+	Short: "List tasks (plain output, use `tk pick` for interactive)",
 	Aliases: []string{"ls", "l"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filter := func(t *model.Task) bool {
@@ -29,11 +28,14 @@ var listCmd = &cobra.Command{
 			if listInbox {
 				return t.Status == model.StatusInbox
 			}
-			if listStale {
-				return (t.Status == model.StatusInbox || t.Status == model.StatusActive) &&
-					t.DaysSinceUpdate() > cfg.StaleWarnDays
+			if listStatus != "" {
+				return t.Status == listStatus
 			}
-			return t.Status == model.StatusInbox || t.Status == model.StatusActive
+			if listStale {
+				return t.IsActive() && t.DaysSinceUpdate() > cfg.StaleWarnDays
+			}
+			// Default: show all active (inbox, todo, next, now)
+			return t.IsActive()
 		}
 
 		tasks, err := st.List(filter)
@@ -50,8 +52,8 @@ var listCmd = &cobra.Command{
 			return render.TaskJSON(tasks)
 		}
 
-		// Show stale warning
-		if !listStale && !listAll {
+		// Stale warning
+		if !listStale && !listAll && listStatus == "" {
 			staleCount := 0
 			for _, t := range tasks {
 				if t.DaysSinceUpdate() > cfg.StaleWarnDays {
@@ -59,13 +61,8 @@ var listCmd = &cobra.Command{
 				}
 			}
 			if staleCount > 0 {
-				fmt.Fprintf(os.Stderr, "⚠ %d stale tasks. Run `tk list --stale` to review.\n\n", staleCount)
+				fmt.Fprintf(os.Stderr, "⚠ %d stale tasks. Run `tk review` to clean up.\n\n", staleCount)
 			}
-		}
-
-		// If interactive TTY and fzf available, use fzf with preview
-		if isInteractive() && hasFzf() {
-			return fzfList(tasks)
 		}
 
 		render.TaskList(tasks, cfg.StaleWarnDays, cfg.StaleCritDays)
@@ -73,39 +70,10 @@ var listCmd = &cobra.Command{
 	},
 }
 
-func isInteractive() bool {
-	fi, err := os.Stdout.Stat()
-	if err != nil {
-		return false
-	}
-	return fi.Mode()&os.ModeCharDevice != 0
-}
-
-func hasFzf() bool {
-	_, err := exec.LookPath("fzf")
-	return err == nil
-}
-
-func fzfList(tasks []*model.Task) error {
-	var lines []string
-	for _, t := range tasks {
-		line := render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays)
-		lines = append(lines, line)
-	}
-
-	input := strings.Join(lines, "\n")
-	fzf := exec.Command("fzf", "--ansi", "--no-sort",
-		"--preview", fmt.Sprintf("cat %s/{1}.md 2>/dev/null | head -40", st.TaskFilePath(0)[:len(st.TaskFilePath(0))-6]),
-	)
-	fzf.Stdin = strings.NewReader(input)
-	fzf.Stdout = os.Stdout
-	fzf.Stderr = os.Stderr
-	return fzf.Run()
-}
-
 func init() {
 	listCmd.Flags().BoolVar(&listInbox, "inbox", false, "Show only inbox items")
-	listCmd.Flags().BoolVar(&listAll, "all", false, "Show all tasks including done/archived")
+	listCmd.Flags().BoolVar(&listAll, "all", false, "Show all including done/archived")
 	listCmd.Flags().BoolVar(&listStale, "stale", false, "Show stale tasks")
+	listCmd.Flags().StringVar(&listStatus, "status", "", "Filter by status (inbox|todo|next|now|done|archived)")
 	rootCmd.AddCommand(listCmd)
 }

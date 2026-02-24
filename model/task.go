@@ -11,25 +11,43 @@ import (
 )
 
 type Task struct {
-	ID        int       `yaml:"id"`
-	Title     string    `yaml:"title"`
-	Status    string    `yaml:"status"`
-	Priority  string    `yaml:"priority,omitempty"`
-	Tags      []string  `yaml:"tags,omitempty"`
-	Created   time.Time `yaml:"created"`
-	Updated   time.Time `yaml:"updated"`
-	FocusDate string    `yaml:"focus_date,omitempty"`
+	ID       int       `yaml:"id"`
+	Title    string    `yaml:"title"`
+	Status   string    `yaml:"status"`
+	Priority string    `yaml:"priority,omitempty"`
+	Tags     []string  `yaml:"tags,omitempty"`
+	Created  time.Time `yaml:"created"`
+	Updated  time.Time `yaml:"updated"`
 
-	// Body is the markdown content below frontmatter
 	Body string `yaml:"-"`
 }
 
 const (
 	StatusInbox    = "inbox"
-	StatusActive   = "active"
+	StatusTodo     = "todo"
+	StatusNext     = "next"
+	StatusNow      = "now"
 	StatusDone     = "done"
 	StatusArchived = "archived"
 )
+
+// StatusOrder defines the natural progression.
+var StatusOrder = []string{StatusInbox, StatusTodo, StatusNext, StatusNow, StatusDone}
+
+// Advance returns the next status in the natural flow, or "" if already terminal.
+func Advance(current string) string {
+	for i, s := range StatusOrder {
+		if s == current && i+1 < len(StatusOrder) {
+			return StatusOrder[i+1]
+		}
+	}
+	return ""
+}
+
+// IsActive returns true if the task is in a working state (not done/archived).
+func (t *Task) IsActive() bool {
+	return t.Status != StatusDone && t.Status != StatusArchived
+}
 
 func ParseFile(path string) (*Task, error) {
 	data, err := os.ReadFile(path)
@@ -53,7 +71,7 @@ func Parse(data []byte) (*Task, error) {
 
 	fm := content[4 : 4+end]
 	body := ""
-	rest := content[4+end+4:] // skip closing ---\n
+	rest := content[4+end+4:]
 	if len(rest) > 0 {
 		body = strings.TrimPrefix(rest, "\n")
 	}
@@ -63,6 +81,11 @@ func Parse(data []byte) (*Task, error) {
 		return nil, fmt.Errorf("parse frontmatter: %w", err)
 	}
 	t.Body = body
+
+	// Migrate old "active" status to "todo"
+	if t.Status == "active" {
+		t.Status = StatusTodo
+	}
 
 	return &t, nil
 }
@@ -104,7 +127,6 @@ func (t *Task) DaysSinceUpdate() int {
 	return int(time.Since(t.Updated).Hours() / 24)
 }
 
-// NextAction returns the first unchecked sub-task from the body, or the title if none.
 func (t *Task) NextAction() string {
 	scanner := bufio.NewScanner(strings.NewReader(t.Body))
 	for scanner.Scan() {
@@ -116,7 +138,6 @@ func (t *Task) NextAction() string {
 	return t.Title
 }
 
-// SubTaskStats returns (total, completed) counts of sub-tasks.
 func (t *Task) SubTaskStats() (int, int) {
 	total, done := 0, 0
 	scanner := bufio.NewScanner(strings.NewReader(t.Body))
