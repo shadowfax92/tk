@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/nickhudkins/tk/model"
 	"github.com/nickhudkins/tk/render"
 )
@@ -27,6 +28,7 @@ func isInteractive() bool {
 
 var statusFilters = []string{"", model.StatusInbox, model.StatusTodo, model.StatusNext, model.StatusNow}
 var statusFilterLabels = []string{"all", "inbox", "todo", "next", "now"}
+var pickerFilterLabelColor = color.New(color.FgYellow, color.Bold)
 
 // fzfPick runs a looping interactive fzf picker.
 // After each action, reloads tasks and re-enters fzf. ESC to exit.
@@ -111,7 +113,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 		if currentTag != "" {
 			tagLabel = "#" + currentTag
 		}
-		filterLabel := fmt.Sprintf("[status:%s tag:%s]", statusLabel, tagLabel)
+		filterLabel := pickerFilterLabelColor.Sprintf("[status:%s tag:%s]", statusLabel, tagLabel)
 		header := fmt.Sprintf("%s  enter:edit  ^p:advance  ^b:demote  ^d:done  ^o:archive\n^x:delete  ^r:priority  ^t:add-tag  ^f:status  ^g:tag  tab:multi  esc:quit", filterLabel)
 
 		fzf := exec.Command("fzf",
