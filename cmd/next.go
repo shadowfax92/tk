@@ -30,7 +30,7 @@ var nextCmd = &cobra.Command{
 			return render.TaskJSON(tasks)
 		}
 
-		fmt.Println("Next:")
+		fmt.Println("🔜 Next:")
 		for i, t := range tasks {
 			fmt.Printf("  %d. %s\n", i+1, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
 		}

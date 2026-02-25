@@ -53,7 +53,7 @@ func dashboard() error {
 	if content != "" {
 		lines := render.PickFocusItems(content, cfg.FocusItems)
 		if len(lines) > 0 {
-			focusHeadingColor.Println("Focus")
+			focusHeadingColor.Println("🎯 Focus")
 			for _, line := range lines {
 				fmt.Printf("  %s\n", focusItemColor.Sprint(line))
 			}
@@ -67,7 +67,7 @@ func dashboard() error {
 	})
 	sortTasksByPriority(nowTasks)
 
-	bold.Printf("Now (%s)\n", time.Now().Format("Mon Jan 2"))
+	bold.Printf("🔥 Now (%s)\n", time.Now().Format("Mon Jan 2"))
 	if len(nowTasks) == 0 {
 		dim.Println("  No tasks for now. Run `tk plan` to pick from next.")
 	} else {
@@ -83,7 +83,7 @@ func dashboard() error {
 	})
 	sortTasksByPriority(nextTasks)
 	if len(nextTasks) > 0 {
-		bold.Println("Next")
+		bold.Println("🔜 Next")
 		for _, t := range nextTasks {
 			fmt.Printf("  %s\n", render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
 		}
