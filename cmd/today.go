@@ -9,8 +9,8 @@ import (
 )
 
 var todayCmd = &cobra.Command{
-	Use:   "today",
-	Short: "Show tasks with status 'now' (today's focus)",
+	Use:     "today",
+	Short:   "Show tasks with status 'now' (today's focus)",
 	Aliases: []string{"td"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
@@ -19,6 +19,7 @@ var todayCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		sortTasksByPriority(tasks)
 
 		if len(tasks) == 0 {
 			fmt.Println("No tasks for today. Run `tk plan` to pick from 'next'.")
