@@ -13,7 +13,7 @@ You have tasks scattered across apps, notes, and your head. tk stores each task 
 - 📥 **Quick capture** — `tk add "thing"` drops it in inbox/next/now, zero friction
 - 🔄 **GTD status flow** — tasks move through `inbox → todo → next → now → done`
 - 🔍 **Interactive picker** — fzf-powered loop to process tasks without re-running commands
-- 📋 **Daily dashboard** — bare `tk` shows your focus, today's tasks, and what's next
+- 📋 **Daily dashboard** — bare `tk` shows your focus and today's tasks
 - 🏷️ **Tags & priorities** — lightweight categorization without imposed project structure
 - 🤖 **Agent-friendly** — `--json` output on every list command for programmatic use
 
@@ -71,7 +71,7 @@ Tasks move through a GTD-inspired pipeline that naturally narrows your focus:
 ## CLI
 
 ```sh
-tk                              # dashboard — focus + now + next
+tk                              # dashboard — focus + now
 tk add "title"                  # capture to inbox
 tk add "title" -d "details"     # with description
 tk add "title" --next           # add directly to next
@@ -196,10 +196,6 @@ Focus
 Now (Mon Feb 24)
   1. #42 Fix auth redirect loop
   2. #51 Review open PR
-
-Next
-  #53 Write CDP test harness
-  #55 Update deployment docs
 
 Inbox: 3  Todo: 12  Next: 4  Now: 2  Done: 28
 ```

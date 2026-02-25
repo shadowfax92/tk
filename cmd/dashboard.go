@@ -51,19 +51,6 @@ func dashboard() error {
 	}
 	fmt.Println()
 
-	// Next tasks (this week)
-	nextTasks, _ := st.List(func(t *model.Task) bool {
-		return t.Status == model.StatusNext
-	})
-	sortTasksByPriority(nextTasks)
-	if len(nextTasks) > 0 {
-		bold.Println("🔜 Next")
-		for _, t := range nextTasks {
-			fmt.Printf("  %s\n", render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
-		}
-		fmt.Println()
-	}
-
 	// Counts
 	all, _ := st.List(nil)
 	counts := map[string]int{}
