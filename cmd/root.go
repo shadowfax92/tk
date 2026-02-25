@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -63,6 +65,7 @@ func dashboard() error {
 	nowTasks, _ := st.List(func(t *model.Task) bool {
 		return t.Status == model.StatusNow
 	})
+	sortTasksByPriority(nowTasks)
 
 	bold.Printf("Now (%s)\n", time.Now().Format("Mon Jan 2"))
 	if len(nowTasks) == 0 {
@@ -78,6 +81,7 @@ func dashboard() error {
 	nextTasks, _ := st.List(func(t *model.Task) bool {
 		return t.Status == model.StatusNext
 	})
+	sortTasksByPriority(nextTasks)
 	if len(nextTasks) > 0 {
 		bold.Println("Next")
 		for _, t := range nextTasks {
@@ -107,6 +111,32 @@ func dashboard() error {
 	fmt.Println()
 
 	return nil
+}
+
+func sortTasksByPriority(tasks []*model.Task) {
+	sort.SliceStable(tasks, func(i, j int) bool {
+		a, b := tasks[i], tasks[j]
+		ar, br := dashboardPriorityRank(a.Priority), dashboardPriorityRank(b.Priority)
+		if ar == br {
+			return a.ID < b.ID
+		}
+		return ar < br
+	})
+}
+
+func dashboardPriorityRank(priority string) int {
+	switch strings.ToLower(priority) {
+	case "p0":
+		return 0
+	case "p1":
+		return 1
+	case "p2":
+		return 2
+	case "":
+		return 3
+	default:
+		return 99
+	}
 }
 
 func init() {
