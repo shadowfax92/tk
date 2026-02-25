@@ -37,30 +37,53 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-const usageTemplateWithAliases = `Usage:{{if .Runnable}}
+const usageTemplateWithAliases = `{{helpHeader "Usage:"}}{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
-Aliases:
+{{helpHeader "Aliases:"}}
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
-Examples:
+{{helpHeader "Examples:"}}
 {{.Example}}{{end}}{{if .HasAvailableSubCommands}}
 
-Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{if .Aliases}} (aliases: {{range $i, $a := .Aliases}}{{if $i}}, {{end}}{{$a}}{{end}}){{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+{{helpHeader "Available Commands:"}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{helpCmdCol (rpad .Name .NamePadding) }} {{.Short}}{{if .Aliases}} {{helpAliases .Aliases}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
-Flags:
+{{helpHeader "Flags:"}}
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
-Global Flags:
+{{helpHeader "Global Flags:"}}
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 
-Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+{{helpHeader "Additional help topics:"}}{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{helpCmdCol (rpad .CommandPath .CommandPathPadding)}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
 
-Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+{{helpHint (printf "Use \"%s [command] --help\" for more information about a command." .CommandPath)}}{{end}}
 `
+
+var (
+	helpHeaderColor = color.New(color.Bold, color.FgCyan)
+	helpCmdColor    = color.New(color.FgHiGreen)
+	helpAliasColor  = color.New(color.FgYellow)
+	helpHintColor   = color.New(color.Faint)
+)
+
+func helpHeader(s string) string {
+	return helpHeaderColor.Sprint(s)
+}
+
+func helpCmdCol(s string) string {
+	return helpCmdColor.Sprint(s)
+}
+
+func helpAliases(aliases []string) string {
+	return helpAliasColor.Sprintf("(aliases: %s)", strings.Join(aliases, ", "))
+}
+
+func helpHint(s string) string {
+	return helpHintColor.Sprint(s)
+}
 
 func dashboard() error {
 	if cfg.Demo {
@@ -165,6 +188,11 @@ func dashboardPriorityRank(priority string) int {
 }
 
 func init() {
+	cobra.AddTemplateFunc("helpHeader", helpHeader)
+	cobra.AddTemplateFunc("helpCmdCol", helpCmdCol)
+	cobra.AddTemplateFunc("helpAliases", helpAliases)
+	cobra.AddTemplateFunc("helpHint", helpHint)
+
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Output as JSON")
 	rootCmd.SetUsageTemplate(usageTemplateWithAliases)
 }
