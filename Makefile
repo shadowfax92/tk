@@ -2,7 +2,7 @@ BINARY := tk
 REAL_BINARY := $(BINARY)-real
 GOBIN := $(shell go env GOPATH)/bin
 
-.PHONY: build install clean
+.PHONY: build install install-direct clean
 
 build:
 	go build -o $(BINARY) .
@@ -13,6 +13,10 @@ install: build
 	chmod +x "$(GOBIN)/$(BINARY)"
 	@echo "Installed $(REAL_BINARY) to $(GOBIN)/$(REAL_BINARY)"
 	@echo "Installed wrapper $(BINARY) to $(GOBIN)/$(BINARY)"
+
+install-direct: build
+	cp $(BINARY) $(GOBIN)/$(BINARY)
+	@echo "Installed $(BINARY) to $(GOBIN)/$(BINARY)"
 
 clean:
 	rm -f $(BINARY)

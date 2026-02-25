@@ -81,6 +81,7 @@ tk list --status done --sort updated --show-updated   # most recent done first, 
 tk demo on                      # hide dashboard content during screenshare
 tk pick                         # interactive fzf picker (loops)
 tk show 42                      # view task details
+tk copy 42                      # copy absolute task file path to clipboard
 tk edit 42                      # open in $EDITOR
 tk done 42                      # mark done
 tk promote 42                   # advance status one step
