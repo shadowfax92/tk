@@ -10,7 +10,7 @@
 
 You have tasks scattered across apps, notes, and your head. tk stores each task as a plain `.md` file with YAML frontmatter — readable in the CLI, Obsidian, and any text editor. No database, no sync, just files you can git track.
 
-- 📥 **Quick capture** — `tk add "thing"` drops it in the inbox, zero friction
+- 📥 **Quick capture** — `tk add "thing"` drops it in inbox/next/now, zero friction
 - 🔄 **GTD status flow** — tasks move through `inbox → todo → next → now → done`
 - 🔍 **Interactive picker** — fzf-powered loop to process tasks without re-running commands
 - 📋 **Daily dashboard** — bare `tk` shows your focus, today's tasks, and what's next
@@ -72,6 +72,8 @@ Tasks move through a GTD-inspired pipeline that naturally narrows your focus:
 tk                              # dashboard — focus + now + next
 tk add "title"                  # capture to inbox
 tk add "title" -d "details"     # with description
+tk add "title" --next           # add directly to next
+tk add "title" --now            # add directly to now
 tk list                         # list active tasks
 tk pick                         # interactive fzf picker (loops)
 tk show 42                      # view task details

@@ -78,6 +78,14 @@ func (s *Store) NextID() (int, error) {
 }
 
 func (s *Store) Add(title, body string) (*model.Task, error) {
+	return s.AddWithStatus(title, body, model.StatusInbox)
+}
+
+func (s *Store) AddWithStatus(title, body, status string) (*model.Task, error) {
+	if status == "" {
+		status = model.StatusInbox
+	}
+
 	id, err := s.NextID()
 	if err != nil {
 		return nil, err
@@ -87,7 +95,7 @@ func (s *Store) Add(title, body string) (*model.Task, error) {
 	t := &model.Task{
 		ID:      id,
 		Title:   title,
-		Status:  model.StatusInbox,
+		Status:  status,
 		Created: now,
 		Updated: now,
 		Body:    body,
