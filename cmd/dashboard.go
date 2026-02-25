@@ -35,6 +35,15 @@ func dashboard() error {
 		}
 	}
 
+	// Goals
+	goalHeadingColor := color.New(color.FgGreen, color.Bold)
+	goals, _ := st.ReadGoals()
+	if len(goals) > 0 {
+		goalHeadingColor.Println("🏁 Goals")
+		render.Goals(goals)
+		fmt.Println()
+	}
+
 	// Now tasks
 	nowTasks, _ := st.List(func(t *model.Task) bool {
 		return t.Status == model.StatusNow

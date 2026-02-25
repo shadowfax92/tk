@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -165,6 +166,70 @@ func PickFocusItems(content string, max int) []string {
 	}
 
 	return filtered[:max]
+}
+
+var (
+	goalGreen  = color.New(color.FgGreen)
+	goalYellow = color.New(color.FgYellow)
+	goalRed    = color.New(color.FgRed, color.Bold)
+)
+
+func goalColor(daysLeft int) *color.Color {
+	switch {
+	case daysLeft > 14:
+		return goalGreen
+	case daysLeft >= 4:
+		return goalYellow
+	default:
+		return goalRed
+	}
+}
+
+func progressBar(current, target int, c *color.Color) string {
+	const width = 12
+	ratio := float64(current) / float64(target)
+	if ratio > 1 {
+		ratio = 1
+	}
+	filled := int(ratio * width)
+	empty := width - filled
+	return c.Sprint(strings.Repeat("█", filled)) + dimColor.Sprint(strings.Repeat("░", empty))
+}
+
+func GoalLine(g *model.Goal) string {
+	days := g.DaysLeft()
+	c := goalColor(days)
+
+	var countdown string
+	switch {
+	case days < 0:
+		countdown = c.Sprintf("OVERDUE %dd", -days)
+	case days == 0:
+		countdown = c.Sprint("due today")
+	case days == 1:
+		countdown = c.Sprint("1 day to go")
+	default:
+		countdown = c.Sprintf("%d days to go", days)
+	}
+
+	if !g.HasMetric() {
+		return fmt.Sprintf("  %-24s %s", g.Title, countdown)
+	}
+
+	metricStr := fmt.Sprintf("%d/%d %s", g.Current, g.Target, g.Metric)
+	bar := progressBar(g.Current, g.Target, c)
+	return fmt.Sprintf("  %-24s %-18s %s  %s", g.Title, metricStr, bar, countdown)
+}
+
+func Goals(goals []model.Goal) {
+	sort.SliceStable(goals, func(i, j int) bool {
+		di := goals[i].DaysLeft()
+		dj := goals[j].DaysLeft()
+		return di < dj
+	})
+	for _, g := range goals {
+		fmt.Println(GoalLine(&g))
+	}
 }
 
 func NextActions(tasks []*model.Task) {

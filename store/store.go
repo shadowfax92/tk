@@ -38,6 +38,10 @@ func (s *Store) focusPath() string {
 	return filepath.Join(s.Root, ".focus.md")
 }
 
+func (s *Store) goalsPath() string {
+	return filepath.Join(s.Root, ".goals.yaml")
+}
+
 func (s *Store) taskPath(id int) string {
 	return filepath.Join(s.Root, fmt.Sprintf("%03d.md", id))
 }
@@ -162,6 +166,21 @@ func (s *Store) List(filter func(*model.Task) bool) ([]*model.Task, error) {
 	})
 
 	return tasks, nil
+}
+
+func (s *Store) ReadGoals() ([]model.Goal, error) {
+	return model.ParseGoals(s.goalsPath())
+}
+
+func (s *Store) GoalsFilePath() string {
+	return s.goalsPath()
+}
+
+func (s *Store) EnsureGoals() error {
+	if _, err := os.Stat(s.goalsPath()); err == nil {
+		return nil
+	}
+	return os.WriteFile(s.goalsPath(), []byte("# - title: Your goal\n#   deadline: 2026-12-31\n#   metric: units\n#   current: 0\n#   target: 10\n"), 0644)
 }
 
 func (s *Store) ReadFocus() (string, error) {
