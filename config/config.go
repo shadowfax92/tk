@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -13,6 +15,7 @@ type Config struct {
 	StaleWarnDays int    `yaml:"stale_warn_days"`
 	StaleCritDays int    `yaml:"stale_critical_days"`
 	FocusItems    int    `yaml:"focus_items"`
+	Demo          bool   `yaml:"demo"`
 }
 
 var DefaultConfig = Config{
@@ -21,6 +24,7 @@ var DefaultConfig = Config{
 	StaleWarnDays: 28,
 	StaleCritDays: 56,
 	FocusItems:    3,
+	Demo:          false,
 }
 
 func configPath() string {
@@ -82,10 +86,45 @@ func Init() error {
 	return os.WriteFile(p, data, 0644)
 }
 
+func Save(cfg *Config) error {
+	if cfg == nil {
+		return fmt.Errorf("nil config")
+	}
+
+	p := configPath()
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		return err
+	}
+
+	out := *cfg
+	out.Root = collapseHome(out.Root)
+
+	data, err := yaml.Marshal(out)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(p, data, 0644)
+}
+
 func expandHome(path string) string {
 	if len(path) > 1 && path[:2] == "~/" {
 		home, _ := os.UserHomeDir()
 		return filepath.Join(home, path[2:])
+	}
+	return path
+}
+
+func collapseHome(path string) string {
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		return path
+	}
+	if path == home {
+		return "~"
+	}
+	prefix := home + string(os.PathSeparator)
+	if strings.HasPrefix(path, prefix) {
+		return "~/" + strings.TrimPrefix(path, prefix)
 	}
 	return path
 }

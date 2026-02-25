@@ -36,6 +36,11 @@ var rootCmd = &cobra.Command{
 }
 
 func dashboard() error {
+	if cfg.Demo {
+		fmt.Println("tk demo mode")
+		return nil
+	}
+
 	bold := color.New(color.Bold)
 	dim := color.New(color.Faint)
 	focusHeadingColor := color.New(color.FgHiBlue, color.Bold)

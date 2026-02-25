@@ -34,6 +34,7 @@ Create a config at `~/.config/tk/config.yaml`:
 ```yaml
 root: ~/path/to/your/tasks
 focus_items: 3
+demo: false
 ```
 
 That's it. `tk add "first task"` to get started.
@@ -77,6 +78,7 @@ tk add "title" --next           # add directly to next
 tk add "title" --now            # add directly to now
 tk list                         # list active tasks
 tk list --status done --sort updated --show-updated   # most recent done first, with updated age
+tk demo on                      # hide dashboard content during screenshare
 tk pick                         # interactive fzf picker (loops)
 tk show 42                      # view task details
 tk edit 42                      # open in $EDITOR
@@ -108,6 +110,7 @@ tk export                       # markdown overview to stdout
 
 Config:
 - `focus_items` — number of focus items to show (randomly sampled each run for `tk` and `tk focus`)
+- `demo` — when true, bare `tk` prints only `tk demo mode`
 
 ## Interactive Picker
 
