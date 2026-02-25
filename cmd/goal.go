@@ -11,7 +11,7 @@ import (
 )
 
 var goalCmd = &cobra.Command{
-	Use:     "goal",
+	Use:     "goals",
 	Short:   "Show or edit goals",
 	Aliases: []string{"g"},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -21,7 +21,7 @@ var goalCmd = &cobra.Command{
 		}
 
 		if len(goals) == 0 {
-			fmt.Println("No goals. Run `tk goal edit` to add some.")
+			fmt.Println("No goals. Run `tk goals edit` to add some.")
 			return nil
 		}
 
