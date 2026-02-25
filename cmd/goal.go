@@ -12,8 +12,9 @@ import (
 
 var goalCmd = &cobra.Command{
 	Use:     "goals",
-	Short:   "Show or edit goals",
-	Aliases: []string{"g"},
+	Short:       "Show or edit goals",
+	Aliases:     []string{"g"},
+	Annotations: map[string]string{"group": "Organize:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		goals, err := st.ReadGoals()
 		if err != nil {

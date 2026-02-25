@@ -8,9 +8,10 @@ import (
 )
 
 var priorityCmd = &cobra.Command{
-	Use:     "priority <id> <p0|p1|p2>",
-	Short:   "Set task priority",
-	Aliases: []string{"prio", "piority", "priorty"},
+	Use:         "priority <id> <p0|p1|p2>",
+	Short:       "Set task priority",
+	Aliases:     []string{"prio", "piority", "priorty"},
+	Annotations: map[string]string{"group": "Status:"},
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return setTaskPriority(args[0], args[1])
@@ -18,8 +19,9 @@ var priorityCmd = &cobra.Command{
 }
 
 var p0Cmd = &cobra.Command{
-	Use:   "p0 <id>",
-	Short: "Set task priority to p0",
+	Use:         "p0 <id>",
+	Short:       "Set task priority to p0",
+	Annotations: map[string]string{"group": "Status:"},
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return setTaskPriority(args[0], "p0")
@@ -27,8 +29,9 @@ var p0Cmd = &cobra.Command{
 }
 
 var p1Cmd = &cobra.Command{
-	Use:   "p1 <id>",
-	Short: "Set task priority to p1",
+	Use:         "p1 <id>",
+	Short:       "Set task priority to p1",
+	Annotations: map[string]string{"group": "Status:"},
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return setTaskPriority(args[0], "p1")
@@ -36,8 +39,9 @@ var p1Cmd = &cobra.Command{
 }
 
 var p2Cmd = &cobra.Command{
-	Use:   "p2 <id>",
-	Short: "Set task priority to p2",
+	Use:         "p2 <id>",
+	Short:       "Set task priority to p2",
+	Annotations: map[string]string{"group": "Status:"},
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return setTaskPriority(args[0], "p2")

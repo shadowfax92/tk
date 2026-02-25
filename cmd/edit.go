@@ -10,9 +10,10 @@ import (
 )
 
 var editCmd = &cobra.Command{
-	Use:     "edit <id>",
-	Short:   "Open a task in your editor",
-	Aliases: []string{"e"},
+	Use:         "edit <id>",
+	Short:       "Open a task in your editor",
+	Aliases:     []string{"e"},
+	Annotations: map[string]string{"group": "Tasks:"},
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])

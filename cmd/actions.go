@@ -15,8 +15,9 @@ var (
 
 var actionsCmd = &cobra.Command{
 	Use:     "actions",
-	Short:   "Show next actionable item per task (defaults to now)",
-	Aliases: []string{"v"},
+	Short:       "Show next action per task",
+	Aliases:     []string{"v"},
+	Annotations: map[string]string{"group": "Views:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		status := model.StatusNow
 		if actionsNext {

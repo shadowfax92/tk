@@ -13,7 +13,8 @@ import (
 
 var reviewCmd = &cobra.Command{
 	Use:   "review",
-	Short: "Review stale tasks — archive, delete, or re-confirm",
+	Short:       "Review and clean up stale tasks",
+	Annotations: map[string]string{"group": "Organize:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
 			return t.IsActive() && t.DaysSinceUpdate() > cfg.StaleWarnDays

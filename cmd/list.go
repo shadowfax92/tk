@@ -26,8 +26,9 @@ var (
 
 var listCmd = &cobra.Command{
 	Use:     "list",
-	Short:   "List tasks (plain output, use `tk pick` for interactive)",
-	Aliases: []string{"ls", "l"},
+	Short:       "List tasks",
+	Aliases:     []string{"ls", "l"},
+	Annotations: map[string]string{"group": "Views:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filter := func(t *model.Task) bool {
 			if listAll {

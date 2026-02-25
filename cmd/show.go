@@ -10,8 +10,9 @@ import (
 )
 
 var showCmd = &cobra.Command{
-	Use:   "show <id>",
-	Short: "View a task's details",
+	Use:         "show <id>",
+	Short:       "View a task's details",
+	Annotations: map[string]string{"group": "Tasks:"},
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])

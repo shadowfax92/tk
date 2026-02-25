@@ -13,8 +13,9 @@ import (
 
 var copyCmd = &cobra.Command{
 	Use:     "copy <id>",
-	Short:   "Copy a task file's absolute path to clipboard",
-	Aliases: []string{"c"},
+	Short:       "Copy task file path to clipboard",
+	Aliases:     []string{"c"},
+	Annotations: map[string]string{"group": "Tasks:"},
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])

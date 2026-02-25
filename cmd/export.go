@@ -10,7 +10,8 @@ import (
 
 var exportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "Export all tasks as a single markdown overview",
+	Short:       "Export all tasks as markdown",
+	Annotations: map[string]string{"group": "Views:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(nil)
 		if err != nil {

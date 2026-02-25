@@ -13,7 +13,8 @@ import (
 
 var planCmd = &cobra.Command{
 	Use:   "plan",
-	Short: "Pick tasks to move to 'now' (fzf multi-select from todo/next)",
+	Short:       "Move tasks to 'now' (fzf multi-select)",
+	Annotations: map[string]string{"group": "Interactive:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
 			return t.Status == model.StatusTodo || t.Status == model.StatusNext

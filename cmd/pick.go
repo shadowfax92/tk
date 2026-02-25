@@ -9,7 +9,8 @@ var pickAll bool
 
 var pickCmd = &cobra.Command{
 	Use:   "pick",
-	Short: "Interactive task picker with actions (looping fzf)",
+	Short:       "Interactive task picker (fzf)",
+	Annotations: map[string]string{"group": "Interactive:"},
 	Aliases: []string{"i"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return fzfPick(func(t *model.Task) bool {

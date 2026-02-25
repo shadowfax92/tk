@@ -13,8 +13,9 @@ import (
 
 var tagsCmd = &cobra.Command{
 	Use:     "tags",
-	Short:   "Manage tags",
-	Aliases: []string{"tag"},
+	Short:       "Manage tags",
+	Aliases:     []string{"tag"},
+	Annotations: map[string]string{"group": "Organize:"},
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return listTags()

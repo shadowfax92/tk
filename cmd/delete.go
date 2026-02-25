@@ -9,7 +9,8 @@ import (
 
 var deleteCmd = &cobra.Command{
 	Use:   "delete <id>",
-	Short: "Delete a task permanently",
+	Short:       "Delete a task",
+	Annotations: map[string]string{"group": "Tasks:"},
 	Aliases: []string{"rm"},
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

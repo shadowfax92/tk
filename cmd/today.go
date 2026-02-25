@@ -10,8 +10,9 @@ import (
 
 var todayCmd = &cobra.Command{
 	Use:     "today",
-	Short:   "Show tasks with status 'now' (today's focus)",
-	Aliases: []string{"td", "t"},
+	Short:       "Show today's tasks (status: now)",
+	Aliases:     []string{"td", "t"},
+	Annotations: map[string]string{"group": "Views:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
 			return t.Status == model.StatusNow

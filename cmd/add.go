@@ -17,9 +17,10 @@ var addTags []string
 var addDue string
 
 var addCmd = &cobra.Command{
-	Use:     "add [title...]",
-	Short:   "Add a task (defaults to inbox)",
-	Aliases: []string{"a"},
+	Use:         "add [title...]",
+	Short:       "Add a task (defaults to inbox)",
+	Aliases:     []string{"a"},
+	Annotations: map[string]string{"group": "Tasks:"},
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		status := model.StatusInbox

@@ -10,8 +10,9 @@ import (
 
 var doneCmd = &cobra.Command{
 	Use:     "done <id>",
-	Short:   "Mark a task as done",
-	Aliases: []string{"d"},
+	Short:       "Mark a task as done",
+	Aliases:     []string{"d"},
+	Annotations: map[string]string{"group": "Status:"},
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])

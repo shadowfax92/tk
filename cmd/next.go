@@ -10,8 +10,9 @@ import (
 
 var nextCmd = &cobra.Command{
 	Use:     "next",
-	Short:   "Show tasks with status 'next'",
-	Aliases: []string{"n"},
+	Short:       "Show tasks with status 'next'",
+	Aliases:     []string{"n"},
+	Annotations: map[string]string{"group": "Views:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
 			return t.Status == model.StatusNext

@@ -10,7 +10,8 @@ import (
 
 var demoCmd = &cobra.Command{
 	Use:   "demo [on|off]",
-	Short: "Show or set dashboard demo mode",
+	Short:       "Toggle dashboard demo mode",
+	Annotations: map[string]string{"group": "Other:"},
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {

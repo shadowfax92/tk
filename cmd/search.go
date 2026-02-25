@@ -10,7 +10,8 @@ import (
 
 var searchCmd = &cobra.Command{
 	Use:   "search [query]",
-	Short: "Search tasks (interactive fzf with actions when no query)",
+	Short:       "Search tasks by title or body",
+	Annotations: map[string]string{"group": "Views:"},
 	Aliases: []string{"s"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// No query: interactive fzf picker with actions

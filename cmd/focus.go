@@ -13,8 +13,9 @@ var focusShort bool
 
 var focusCmd = &cobra.Command{
 	Use:     "focus",
-	Short:   "Show or edit focus items",
-	Aliases: []string{"f"},
+	Short:       "Show or edit focus items",
+	Aliases:     []string{"f"},
+	Annotations: map[string]string{"group": "Organize:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		st.EnsureFocus()
 
