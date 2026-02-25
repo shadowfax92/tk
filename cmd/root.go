@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -39,25 +38,20 @@ var rootCmd = &cobra.Command{
 func dashboard() error {
 	bold := color.New(color.Bold)
 	dim := color.New(color.Faint)
+	focusHeadingColor := color.New(color.FgHiBlue, color.Bold)
+	focusItemColor := color.New(color.FgHiBlue)
 
 	// Focus
 	content, _ := st.ReadFocus()
 	if content != "" {
-		bold.Println("Focus")
-		lines := strings.Split(strings.TrimSpace(content), "\n")
-		count := 0
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line == "" || strings.HasPrefix(line, "#") {
-				continue
+		lines := render.PickFocusItems(content, cfg.FocusItems)
+		if len(lines) > 0 {
+			focusHeadingColor.Println("Focus")
+			for _, line := range lines {
+				fmt.Printf("  %s\n", focusItemColor.Sprint(line))
 			}
-			if count >= 3 {
-				break
-			}
-			fmt.Printf("  %s\n", line)
-			count++
+			fmt.Println()
 		}
-		fmt.Println()
 	}
 
 	// Now tasks

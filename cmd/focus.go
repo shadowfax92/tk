@@ -12,8 +12,8 @@ import (
 var focusShort bool
 
 var focusCmd = &cobra.Command{
-	Use:   "focus",
-	Short: "Show or edit focus items",
+	Use:     "focus",
+	Short:   "Show or edit focus items",
 	Aliases: []string{"f"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		st.EnsureFocus()
@@ -28,8 +28,8 @@ var focusCmd = &cobra.Command{
 			return nil
 		}
 
-		max := 4
-		if focusShort {
+		max := cfg.FocusItems
+		if focusShort && max > 3 {
 			max = 3
 		}
 		render.FocusItems(content, max)

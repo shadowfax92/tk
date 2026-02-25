@@ -33,6 +33,7 @@ Create a config at `~/.config/tk/config.yaml`:
 
 ```yaml
 root: ~/path/to/your/tasks
+focus_items: 3
 ```
 
 That's it. `tk add "first task"` to get started.
@@ -87,7 +88,7 @@ tk archive 42                   # shelve task
 tk delete 42                    # delete permanently
 tk today                        # show 'now' tasks
 tk plan                         # fzf multi-select → move to now
-tk focus                        # print focus items
+tk focus                        # print random focus items
 tk next                         # next action per active task
 tk search "auth"                # search tasks
 tk review                       # batch-archive stale tasks
@@ -104,6 +105,9 @@ tk export                       # markdown overview to stdout
 - `--sort <field>` — sort list by `id|created|updated|title|status|priority` (smart defaults per field)
 - `--desc` — reverse sort order for the selected field
 - `--show-updated` — append colored relative updated age (for example, `today`, `1 day ago`, `2 weeks ago`)
+
+Config:
+- `focus_items` — number of focus items to show (randomly sampled each run for `tk` and `tk focus`)
 
 ## Interactive Picker
 

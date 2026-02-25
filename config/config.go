@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Root             string `yaml:"root"`
-	Editor           string `yaml:"editor"`
-	StaleWarnDays    int    `yaml:"stale_warn_days"`
-	StaleCritDays    int    `yaml:"stale_critical_days"`
+	Root          string `yaml:"root"`
+	Editor        string `yaml:"editor"`
+	StaleWarnDays int    `yaml:"stale_warn_days"`
+	StaleCritDays int    `yaml:"stale_critical_days"`
+	FocusItems    int    `yaml:"focus_items"`
 }
 
 var DefaultConfig = Config{
@@ -19,6 +20,7 @@ var DefaultConfig = Config{
 	Editor:        "nvim",
 	StaleWarnDays: 28,
 	StaleCritDays: 56,
+	FocusItems:    3,
 }
 
 func configPath() string {
@@ -54,6 +56,9 @@ func Load() (*Config, error) {
 	}
 	if cfg.StaleCritDays == 0 {
 		cfg.StaleCritDays = 56
+	}
+	if cfg.FocusItems <= 0 {
+		cfg.FocusItems = 3
 	}
 
 	return &cfg, nil

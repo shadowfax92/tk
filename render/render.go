@@ -3,24 +3,27 @@ package render
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/nickhudkins/tk/model"
 )
 
 var (
-	p0Color   = color.New(color.FgRed, color.Bold)
-	p1Color   = color.New(color.FgYellow)
-	p2Color   = color.New(color.FgBlue)
-	doneColor = color.New(color.FgGreen, color.CrossedOut)
-	staleWarn = color.New(color.FgYellow, color.Faint)
-	staleCrit = color.New(color.FgRed, color.Faint)
-	dimColor  = color.New(color.Faint)
-	boldColor = color.New(color.Bold)
-	cyanColor = color.New(color.FgCyan)
-	nowColor  = color.New(color.FgGreen, color.Bold)
+	p0Color    = color.New(color.FgRed, color.Bold)
+	p1Color    = color.New(color.FgYellow)
+	p2Color    = color.New(color.FgBlue)
+	doneColor  = color.New(color.FgGreen, color.CrossedOut)
+	staleWarn  = color.New(color.FgYellow, color.Faint)
+	staleCrit  = color.New(color.FgRed, color.Faint)
+	dimColor   = color.New(color.Faint)
+	boldColor  = color.New(color.Bold)
+	cyanColor  = color.New(color.FgCyan)
+	nowColor   = color.New(color.FgGreen, color.Bold)
+	focusColor = color.New(color.FgHiBlue)
 )
 
 func statusColor(status string) *color.Color {
@@ -128,19 +131,40 @@ func TaskJSON(tasks []*model.Task) error {
 }
 
 func FocusItems(content string, max int) {
+	lines := PickFocusItems(content, max)
+	for _, line := range lines {
+		focusColor.Println(line)
+	}
+}
+
+func PickFocusItems(content string, max int) []string {
 	lines := strings.Split(strings.TrimSpace(content), "\n")
-	count := 0
+
+	var filtered []string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		if count >= max {
-			break
-		}
-		fmt.Println(line)
-		count++
+		filtered = append(filtered, line)
 	}
+
+	if len(filtered) == 0 {
+		return nil
+	}
+
+	if max <= 0 || max > len(filtered) {
+		max = len(filtered)
+	}
+
+	if len(filtered) > 1 {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r.Shuffle(len(filtered), func(i, j int) {
+			filtered[i], filtered[j] = filtered[j], filtered[i]
+		})
+	}
+
+	return filtered[:max]
 }
 
 func NextActions(tasks []*model.Task) {
