@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -35,14 +36,42 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 	}
 
 	filterIdx := 0
+	currentTag := ""
 
 	for {
-		effectiveFilter := func(t *model.Task) bool {
+		baseFilter := func(t *model.Task) bool {
 			if filterFn != nil && !filterFn(t) {
+				return false
+			}
+			return true
+		}
+
+		statusScopedFilter := func(t *model.Task) bool {
+			if !baseFilter(t) {
 				return false
 			}
 			if statusFilters[filterIdx] != "" {
 				return t.Status == statusFilters[filterIdx]
+			}
+			return true
+		}
+
+		statusScopedTasks, err := st.List(statusScopedFilter)
+		if err != nil {
+			return err
+		}
+
+		tagFilters := collectTagFilters(statusScopedTasks)
+		if !containsTagFilter(tagFilters, currentTag) {
+			currentTag = ""
+		}
+
+		effectiveFilter := func(t *model.Task) bool {
+			if !statusScopedFilter(t) {
+				return false
+			}
+			if currentTag != "" {
+				return hasExactTag(t, currentTag)
 			}
 			return true
 		}
@@ -53,8 +82,13 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 		}
 
 		if len(tasks) == 0 {
-			if statusFilters[filterIdx] != "" {
-				fmt.Printf("No %s tasks.\n", statusFilterLabels[filterIdx])
+			statusLabel := statusFilterLabels[filterIdx]
+			if currentTag != "" && statusFilters[filterIdx] != "" {
+				fmt.Printf("No %s tasks with #%s.\n", statusLabel, currentTag)
+			} else if currentTag != "" {
+				fmt.Printf("No tasks with #%s.\n", currentTag)
+			} else if statusFilters[filterIdx] != "" {
+				fmt.Printf("No %s tasks.\n", statusLabel)
 			} else {
 				fmt.Println("No tasks.")
 			}
@@ -72,8 +106,13 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			strings.ReplaceAll(st.Root, "'", "'\\''"),
 		)
 
-		filterLabel := fmt.Sprintf("[%s]", statusFilterLabels[filterIdx])
-		header := fmt.Sprintf("%s  enter:edit  ^p:advance  ^b:demote  ^d:done  ^o:archive\n^x:delete  ^r:priority  ^t:tag  ^f:filter  tab:multi  esc:quit", filterLabel)
+		statusLabel := statusFilterLabels[filterIdx]
+		tagLabel := "all"
+		if currentTag != "" {
+			tagLabel = "#" + currentTag
+		}
+		filterLabel := fmt.Sprintf("[status:%s tag:%s]", statusLabel, tagLabel)
+		header := fmt.Sprintf("%s  enter:edit  ^p:advance  ^b:demote  ^d:done  ^o:archive\n^x:delete  ^r:priority  ^t:add-tag  ^f:status  ^g:tag  tab:multi  esc:quit", filterLabel)
 
 		fzf := exec.Command("fzf",
 			"--ansi",
@@ -83,7 +122,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			"--delimiter", "\t",
 			"--header", header,
 			"--header-first",
-			"--expect", "ctrl-d,ctrl-p,ctrl-b,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f",
+			"--expect", "ctrl-d,ctrl-p,ctrl-b,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f,ctrl-g",
 			"--preview", previewCmd,
 			"--preview-window", "right:50%:wrap",
 		)
@@ -106,6 +145,10 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 
 		if action == "ctrl-f" {
 			filterIdx = (filterIdx + 1) % len(statusFilters)
+			continue
+		}
+		if action == "ctrl-g" {
+			currentTag = nextTagFilter(tagFilters, currentTag)
 			continue
 		}
 
@@ -145,6 +188,60 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 
 		fmt.Println() // blank line before re-entering fzf
 	}
+}
+
+func collectTagFilters(tasks []*model.Task) []string {
+	if len(tasks) == 0 {
+		return []string{""}
+	}
+
+	seen := map[string]bool{}
+	var tags []string
+	for _, t := range tasks {
+		for _, tag := range t.Tags {
+			if tag == "" || seen[tag] {
+				continue
+			}
+			seen[tag] = true
+			tags = append(tags, tag)
+		}
+	}
+	sort.Strings(tags)
+
+	filters := make([]string, 0, len(tags)+1)
+	filters = append(filters, "")
+	filters = append(filters, tags...)
+	return filters
+}
+
+func containsTagFilter(filters []string, target string) bool {
+	for _, f := range filters {
+		if f == target {
+			return true
+		}
+	}
+	return false
+}
+
+func nextTagFilter(filters []string, current string) string {
+	if len(filters) == 0 {
+		return ""
+	}
+	for i, f := range filters {
+		if f == current {
+			return filters[(i+1)%len(filters)]
+		}
+	}
+	return filters[0]
+}
+
+func hasExactTag(t *model.Task, tag string) bool {
+	for _, existing := range t.Tags {
+		if existing == tag {
+			return true
+		}
+	}
+	return false
 }
 
 func extractIDs(lines []string) []int {

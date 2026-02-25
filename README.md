@@ -127,10 +127,14 @@ Config:
 | `Enter` | Edit in `$EDITOR` |
 | `Tab` | Multi-select |
 | `Ctrl-P` | Advance status |
+| `Ctrl-B` | Demote status |
 | `Ctrl-D` | Mark done |
-| `Ctrl-A` | Archive |
+| `Ctrl-O` | Archive |
 | `Ctrl-X` | Delete |
 | `Ctrl-R` | Set priority |
+| `Ctrl-T` | Add tag |
+| `Ctrl-F` | Cycle status filter |
+| `Ctrl-G` | Cycle tag filter (within current status) |
 | `Esc` | Exit picker |
 
 ## Task Format
