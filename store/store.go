@@ -82,6 +82,10 @@ func (s *Store) Add(title, body string) (*model.Task, error) {
 }
 
 func (s *Store) AddWithStatus(title, body, status string) (*model.Task, error) {
+	return s.AddWithStatusAndTags(title, body, status, nil)
+}
+
+func (s *Store) AddWithStatusAndTags(title, body, status string, tags []string) (*model.Task, error) {
 	if status == "" {
 		status = model.StatusInbox
 	}
@@ -96,6 +100,7 @@ func (s *Store) AddWithStatus(title, body, status string) (*model.Task, error) {
 		ID:      id,
 		Title:   title,
 		Status:  status,
+		Tags:    tags,
 		Created: now,
 		Updated: now,
 		Body:    body,

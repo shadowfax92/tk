@@ -87,7 +87,9 @@ tk done 42                      # mark done
 tk promote 42                   # advance status one step
 tk priority 42 p0               # set priority (p0/p1/p2)
 tk p0 42                        # quick set priority p0 (also p1/p2)
-tk tag 42 code                  # add a tag
+tk tags add 42 code             # add tag(s) to a task
+tk tags delete code             # delete tag(s) from all tasks
+tk tags list                    # list current tags with counts
 tk archive 42                   # shelve task
 tk delete 42                    # delete permanently
 tk today                        # show 'now' tasks
