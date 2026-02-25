@@ -42,7 +42,7 @@ That's it. `tk add "first task"` to get started.
 ```sh
 # 1. Capture tasks
 tk add "fix auth redirect loop"
-tk add "review PR" -d "PR #342, needs security review"
+tk add "review PR" -d "needs security review"
 
 # 2. See your dashboard
 tk
@@ -143,7 +143,7 @@ Sub-tasks use standard markdown checkboxes. `tk next` shows the first unchecked 
 **📥 Capture** (anytime)
 ```sh
 tk add "fix the auth redirect loop"
-tk add "review Dani's PR" -d "PR #342"
+tk add "review open PR" -d "needs security review"
 ```
 
 **📋 Process inbox** (periodic)
@@ -179,7 +179,7 @@ Focus
 
 Now (Mon Feb 24)
   1. #42 Fix auth redirect loop
-  2. #51 Review Dani's PR
+  2. #51 Review open PR
 
 Next
   #53 Write CDP test harness
