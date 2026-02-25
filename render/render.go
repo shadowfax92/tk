@@ -169,9 +169,6 @@ func PickFocusItems(content string, max int) []string {
 
 func NextActions(tasks []*model.Task) {
 	for _, t := range tasks {
-		if t.Status != model.StatusNext && t.Status != model.StatusNow {
-			continue
-		}
 		action := t.NextAction()
 		id := fmt.Sprintf("#%-3d", t.ID)
 		fmt.Printf("%s %s → %s\n", boldColor.Sprint(id), t.Title, cyanColor.Sprint(action))

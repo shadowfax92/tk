@@ -92,7 +92,9 @@ tk delete 42                    # delete permanently
 tk today                        # show 'now' tasks
 tk plan                         # fzf multi-select → move to now
 tk focus                        # print random focus items
-tk next                         # next action per active task
+tk next                         # show 'next' tasks
+tk actions                      # next action per now task
+tk actions --next               # next action per next task
 tk search "auth"                # search tasks
 tk review                       # batch-archive stale tasks
 tk export                       # markdown overview to stdout
@@ -150,7 +152,7 @@ Notes, links, whatever you want here.
 - [ ] Deploy to production
 ```
 
-Sub-tasks use standard markdown checkboxes. `tk next` shows the first unchecked one per task.
+Sub-tasks use standard markdown checkboxes. `tk actions` shows the first unchecked one per task.
 
 ## Workflow
 
