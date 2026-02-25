@@ -8,10 +8,10 @@ import (
 )
 
 var priorityCmd = &cobra.Command{
-	Use:   "priority <id> <p0|p1|p2>",
-	Short: "Set task priority",
-	Aliases: []string{"prio", "p"},
-	Args:  cobra.ExactArgs(2),
+	Use:     "priority <id> <p0|p1|p2>",
+	Short:   "Set task priority",
+	Aliases: []string{"prio"},
+	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
