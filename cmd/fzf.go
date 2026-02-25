@@ -73,7 +73,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 		)
 
 		filterLabel := fmt.Sprintf("[%s]", statusFilterLabels[filterIdx])
-		header := fmt.Sprintf("%s  enter:edit  ^p:advance  ^b:demote  ^d:done  ^a:archive\n^x:delete  ^r:priority  ^t:tag  ^f:filter  tab:multi  esc:quit", filterLabel)
+		header := fmt.Sprintf("%s  enter:edit  ^p:advance  ^b:demote  ^d:done  ^o:archive\n^x:delete  ^r:priority  ^t:tag  ^f:filter  tab:multi  esc:quit", filterLabel)
 
 		fzf := exec.Command("fzf",
 			"--ansi",
@@ -83,7 +83,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			"--delimiter", "\t",
 			"--header", header,
 			"--header-first",
-			"--expect", "ctrl-d,ctrl-p,ctrl-b,ctrl-a,ctrl-x,ctrl-r,ctrl-t,ctrl-f",
+			"--expect", "ctrl-d,ctrl-p,ctrl-b,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f",
 			"--preview", previewCmd,
 			"--preview-window", "right:50%:wrap",
 		)
@@ -133,7 +133,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			batchDemote(ids)
 		case "ctrl-d":
 			batchSetStatus(ids, model.StatusDone, "Done")
-		case "ctrl-a":
+		case "ctrl-o":
 			batchSetStatus(ids, model.StatusArchived, "Archived")
 		case "ctrl-x":
 			batchDelete(ids)
