@@ -17,6 +17,7 @@ var (
 	listInbox       bool
 	listAll         bool
 	listStale       bool
+	listDue         bool
 	listStatus      string
 	listSort        string
 	listDesc        bool
@@ -41,6 +42,9 @@ var listCmd = &cobra.Command{
 			if listStale {
 				return t.IsActive() && t.DaysSinceUpdate() > cfg.StaleWarnDays
 			}
+			if listDue {
+				return t.IsActive() && t.HasDue()
+			}
 			// Default: show all active (inbox, todo, next, now)
 			return t.IsActive()
 		}
@@ -50,7 +54,11 @@ var listCmd = &cobra.Command{
 			return err
 		}
 
-		if err := sortTasks(tasks, listSort, listDesc); err != nil {
+		if listDue {
+			sort.SliceStable(tasks, func(i, j int) bool {
+				return tasks[i].DaysUntilDue() < tasks[j].DaysUntilDue()
+			})
+		} else if err := sortTasks(tasks, listSort, listDesc); err != nil {
 			return err
 		}
 
@@ -81,7 +89,7 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
-		render.TaskList(tasks, cfg.StaleWarnDays, cfg.StaleCritDays)
+		render.TaskListWithDue(tasks, cfg.StaleWarnDays, cfg.StaleCritDays, cfg.DueSoonDays)
 		return nil
 	},
 }
@@ -264,6 +272,7 @@ func init() {
 	listCmd.Flags().BoolVar(&listInbox, "inbox", false, "Show only inbox items")
 	listCmd.Flags().BoolVar(&listAll, "all", false, "Show all including done/archived")
 	listCmd.Flags().BoolVar(&listStale, "stale", false, "Show stale tasks")
+	listCmd.Flags().BoolVar(&listDue, "due", false, "Show tasks with due dates, sorted nearest first")
 	listCmd.Flags().StringVar(&listStatus, "status", "", "Filter by status (inbox|todo|next|now|done|archived)")
 	listCmd.Flags().StringVar(&listSort, "sort", "id", "Sort by (id|created|updated|title|status|priority)")
 	listCmd.Flags().BoolVar(&listDesc, "desc", false, "Reverse sort order for selected field")

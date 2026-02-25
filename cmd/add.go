@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nickhudkins/tk/model"
 	"github.com/spf13/cobra"
@@ -12,6 +14,7 @@ var addDesc string
 var addNow bool
 var addNext bool
 var addTags []string
+var addDue string
 
 var addCmd = &cobra.Command{
 	Use:     "add [title...]",
@@ -28,14 +31,36 @@ var addCmd = &cobra.Command{
 		}
 		tags := normalizeTags(addTags)
 
-		title := strings.Join(args, " ")
-		t, err := st.AddWithStatusAndTags(title, addDesc, status, tags)
+		due, err := parseDue(addDue)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Added #%d: %s [%s]\n", t.ID, t.Title, t.Status)
+
+		title := strings.Join(args, " ")
+		t, err := st.AddFull(title, addDesc, status, tags, due)
+		if err != nil {
+			return err
+		}
+		msg := fmt.Sprintf("Added #%d: %s [%s]", t.ID, t.Title, t.Status)
+		if t.HasDue() {
+			msg += fmt.Sprintf(" (due %s)", t.Due)
+		}
+		fmt.Println(msg)
 		return nil
 	},
+}
+
+func parseDue(raw string) (string, error) {
+	if raw == "" {
+		return "", nil
+	}
+	if days, err := strconv.Atoi(raw); err == nil {
+		return time.Now().AddDate(0, 0, days).Format("2006-01-02"), nil
+	}
+	if _, err := time.Parse("2006-01-02", raw); err == nil {
+		return raw, nil
+	}
+	return "", fmt.Errorf("invalid --due value %q (use number of days or YYYY-MM-DD)", raw)
 }
 
 func init() {
@@ -43,6 +68,7 @@ func init() {
 	addCmd.Flags().BoolVar(&addNow, "now", false, "Add task directly to now")
 	addCmd.Flags().BoolVar(&addNext, "next", false, "Add task directly to next")
 	addCmd.Flags().StringSliceVar(&addTags, "tags", nil, "Add tag(s), e.g. --tags \"#cli,#x\" or --tags cli --tags x")
+	addCmd.Flags().StringVar(&addDue, "due", "", "Due date (number of days or YYYY-MM-DD)")
 	addCmd.MarkFlagsMutuallyExclusive("now", "next")
 	rootCmd.AddCommand(addCmd)
 }

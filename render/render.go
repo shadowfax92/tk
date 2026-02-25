@@ -45,7 +45,40 @@ func statusColor(status string) *color.Color {
 	return color.New(color.Reset)
 }
 
+var (
+	dueWarn = color.New(color.FgYellow)
+	dueUrgent = color.New(color.FgRed, color.Bold)
+)
+
+func dueColor(daysLeft, dueSoonDays int) *color.Color {
+	switch {
+	case daysLeft <= 1:
+		return dueUrgent
+	case daysLeft <= dueSoonDays:
+		return dueWarn
+	default:
+		return dimColor
+	}
+}
+
+func DueCountdown(daysLeft int, c *color.Color) string {
+	switch {
+	case daysLeft < 0:
+		return c.Sprintf("OVERDUE %dd", -daysLeft)
+	case daysLeft == 0:
+		return c.Sprint("due today")
+	case daysLeft == 1:
+		return c.Sprint("due tomorrow")
+	default:
+		return c.Sprintf("due in %dd", daysLeft)
+	}
+}
+
 func TaskLine(t *model.Task, staleWarnDays, staleCritDays int) string {
+	return TaskLineWithDue(t, staleWarnDays, staleCritDays, 3)
+}
+
+func TaskLineWithDue(t *model.Task, staleWarnDays, staleCritDays, dueSoonDays int) string {
 	id := fmt.Sprintf("#%-3d", t.ID)
 	status := fmt.Sprintf("[%s]", t.Status)
 
@@ -80,6 +113,13 @@ func TaskLine(t *model.Task, staleWarnDays, staleCritDays int) string {
 		progress = dimColor.Sprintf(" [%d/%d]", done, total)
 	}
 
+	var due string
+	if t.HasDue() && t.IsActive() {
+		days := t.DaysUntilDue()
+		c := dueColor(days, dueSoonDays)
+		due = "  " + DueCountdown(days, c)
+	}
+
 	sc := statusColor(t.Status)
 
 	switch t.Status {
@@ -88,15 +128,21 @@ func TaskLine(t *model.Task, staleWarnDays, staleCritDays int) string {
 	case model.StatusArchived:
 		return fmt.Sprintf("%s %s %s", dimColor.Sprint(id), dimColor.Sprint(status), dimColor.Sprint(t.Title))
 	case model.StatusNow:
-		return fmt.Sprintf("%s %s %s%s%s%s%s", nowColor.Sprint(id), nowColor.Sprint(status), boldColor.Sprint(t.Title), prio, tags, progress, stale)
+		return fmt.Sprintf("%s %s %s%s%s%s%s%s", nowColor.Sprint(id), nowColor.Sprint(status), boldColor.Sprint(t.Title), prio, tags, progress, stale, due)
 	default:
-		return fmt.Sprintf("%s %s %s%s%s%s%s", sc.Sprint(id), sc.Sprint(status), t.Title, prio, tags, progress, stale)
+		return fmt.Sprintf("%s %s %s%s%s%s%s%s", sc.Sprint(id), sc.Sprint(status), t.Title, prio, tags, progress, stale, due)
 	}
 }
 
 func TaskList(tasks []*model.Task, staleWarnDays, staleCritDays int) {
 	for _, t := range tasks {
 		fmt.Println(TaskLine(t, staleWarnDays, staleCritDays))
+	}
+}
+
+func TaskListWithDue(tasks []*model.Task, staleWarnDays, staleCritDays, dueSoonDays int) {
+	for _, t := range tasks {
+		fmt.Println(TaskLineWithDue(t, staleWarnDays, staleCritDays, dueSoonDays))
 	}
 }
 

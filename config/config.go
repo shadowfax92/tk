@@ -15,6 +15,7 @@ type Config struct {
 	StaleWarnDays int    `yaml:"stale_warn_days"`
 	StaleCritDays int    `yaml:"stale_critical_days"`
 	FocusItems    int    `yaml:"focus_items"`
+	DueSoonDays   int    `yaml:"due_soon_days"`
 	Demo          bool   `yaml:"demo"`
 }
 
@@ -24,6 +25,7 @@ var DefaultConfig = Config{
 	StaleWarnDays: 28,
 	StaleCritDays: 56,
 	FocusItems:    3,
+	DueSoonDays:   3,
 	Demo:          false,
 }
 
@@ -63,6 +65,9 @@ func Load() (*Config, error) {
 	}
 	if cfg.FocusItems <= 0 {
 		cfg.FocusItems = 3
+	}
+	if cfg.DueSoonDays <= 0 {
+		cfg.DueSoonDays = 3
 	}
 
 	return &cfg, nil

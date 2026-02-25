@@ -16,10 +16,29 @@ type Task struct {
 	Status   string    `yaml:"status"`
 	Priority string    `yaml:"priority,omitempty"`
 	Tags     []string  `yaml:"tags,omitempty"`
+	Due      string    `yaml:"due,omitempty"`
 	Created  time.Time `yaml:"created"`
 	Updated  time.Time `yaml:"updated"`
 
 	Body string `yaml:"-"`
+}
+
+func (t *Task) HasDue() bool {
+	return t.Due != ""
+}
+
+func (t *Task) DueTime() (time.Time, error) {
+	return time.Parse("2006-01-02", t.Due)
+}
+
+func (t *Task) DaysUntilDue() int {
+	dl, err := t.DueTime()
+	if err != nil {
+		return 0
+	}
+	now := time.Now().Truncate(24 * time.Hour)
+	dl = dl.Truncate(24 * time.Hour)
+	return int(dl.Sub(now).Hours() / 24)
 }
 
 const (

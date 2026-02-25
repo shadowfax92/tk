@@ -44,6 +44,25 @@ func dashboard() error {
 		fmt.Println()
 	}
 
+	// Due Soon
+	dueSoonColor := color.New(color.FgYellow, color.Bold)
+	dueTasks, _ := st.List(func(t *model.Task) bool {
+		if !t.IsActive() || !t.HasDue() {
+			return false
+		}
+		return t.DaysUntilDue() <= cfg.DueSoonDays
+	})
+	if len(dueTasks) > 0 {
+		sort.SliceStable(dueTasks, func(i, j int) bool {
+			return dueTasks[i].DaysUntilDue() < dueTasks[j].DaysUntilDue()
+		})
+		dueSoonColor.Println("⏰ Due Soon")
+		for i, t := range dueTasks {
+			fmt.Printf("  %d. %s\n", i+1, render.TaskLineWithDue(t, cfg.StaleWarnDays, cfg.StaleCritDays, cfg.DueSoonDays))
+		}
+		fmt.Println()
+	}
+
 	// Now tasks
 	nowTasks, _ := st.List(func(t *model.Task) bool {
 		return t.Status == model.StatusNow

@@ -90,6 +90,10 @@ func (s *Store) AddWithStatus(title, body, status string) (*model.Task, error) {
 }
 
 func (s *Store) AddWithStatusAndTags(title, body, status string, tags []string) (*model.Task, error) {
+	return s.AddFull(title, body, status, tags, "")
+}
+
+func (s *Store) AddFull(title, body, status string, tags []string, due string) (*model.Task, error) {
 	if status == "" {
 		status = model.StatusInbox
 	}
@@ -105,6 +109,7 @@ func (s *Store) AddWithStatusAndTags(title, body, status string, tags []string) 
 		Title:   title,
 		Status:  status,
 		Tags:    tags,
+		Due:     due,
 		Created: now,
 		Updated: now,
 		Body:    body,
