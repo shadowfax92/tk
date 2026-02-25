@@ -1,17 +1,32 @@
-# tk
+<div align="center">
 
-A terminal-first task manager that stores tasks as markdown files. Works alongside Obsidian and git.
+# ✅ tk
 
-Each task is a `.md` file with YAML frontmatter. No database, no sync — just files.
+**A terminal-first task manager backed by markdown files.**
+
+*One command. All your tasks, from inbox to done.*
+
+</div>
+
+You have tasks scattered across apps, notes, and your head. tk stores each task as a plain `.md` file with YAML frontmatter — readable in the CLI, Obsidian, and any text editor. No database, no sync, just files you can git track.
+
+- 📥 **Quick capture** — `tk add "thing"` drops it in the inbox, zero friction
+- 🔄 **GTD status flow** — tasks move through `inbox → todo → next → now → done`
+- 🔍 **Interactive picker** — fzf-powered loop to process tasks without re-running commands
+- 📋 **Daily dashboard** — bare `tk` shows your focus, today's tasks, and what's next
+- 🏷️ **Tags & priorities** — lightweight categorization without imposed project structure
+- 🤖 **Agent-friendly** — `--json` output on every list command for programmatic use
+
+---
 
 ## Install
 
-Requires Go and [fzf](https://github.com/junegunn/fzf).
+Requires Go 1.21+ and [fzf](https://github.com/junegunn/fzf).
 
-```
+```sh
 git clone https://github.com/nickhudkins/tk
 cd tk
-make install
+make install    # builds and copies to $GOPATH/bin/
 ```
 
 Create a config at `~/.config/tk/config.yaml`:
@@ -20,78 +35,88 @@ Create a config at `~/.config/tk/config.yaml`:
 root: ~/path/to/your/tasks
 ```
 
-## Quick start
+That's it. `tk add "first task"` to get started.
+
+## Quick Start
+
+```sh
+# 1. Capture tasks
+tk add "fix auth redirect loop"
+tk add "review PR" -d "PR #342, needs security review"
+
+# 2. See your dashboard
+tk
+```
+
+## Status Flow
+
+Tasks move through a GTD-inspired pipeline that naturally narrows your focus:
 
 ```
-tk add "fix auth redirect loop"       # capture to inbox
-tk add "review PR" -d "PR #342"       # with description
-tk                                     # dashboard
-```
-
-## Status flow
-
-Tasks move through a GTD-inspired pipeline:
-
-```
-inbox → todo → next → now → done
+📥 inbox  →  📋 todo  →  🔜 next  →  🔥 now  →  ✅ done
+                                                    ↕
+                                                📦 archived
 ```
 
 - **inbox** — raw captures, unprocessed
-- **todo** — backlog
-- **next** — this week
-- **now** — today
-- **done** — finished
+- **todo** — categorized backlog
+- **next** — planned for this week
+- **now** — today's focus
+- **done** — completed
 
 `tk promote <id>` advances one step. `tk done <id>` jumps straight to done. `tk archive <id>` shelves from any status.
 
-## Commands
+## CLI
 
-| Command | Alias | What it does |
-|---------|-------|--------------|
-| `tk` | | Dashboard — focus + now + next |
-| `tk add "title"` | | New task (inbox) |
-| `tk list` | `ls` | List active tasks |
-| `tk pick` | `i` | Interactive fzf picker (loops) |
-| `tk show <id>` | | View task details |
-| `tk edit <id>` | `e` | Open in `$EDITOR` |
-| `tk done <id>` | `d` | Mark done |
-| `tk promote <id>` | `adv` | Advance status |
-| `tk priority <id> <p>` | `p` | Set p0/p1/p2 |
-| `tk tag <id> <tag>` | `t` | Add tag |
-| `tk archive <id>` | `ar` | Archive |
-| `tk delete <id>` | `rm` | Delete permanently |
-| `tk today` | `td` | Show today's tasks |
-| `tk plan` | | Multi-select tasks → now |
-| `tk focus` | | Print focus items |
-| `tk next` | `n` | Next action per task |
-| `tk search` | `s` | Search / fzf filter |
-| `tk review` | | Batch-archive stale tasks |
-| `tk export` | | Markdown overview to stdout |
+```sh
+tk                              # dashboard — focus + now + next
+tk add "title"                  # capture to inbox
+tk add "title" -d "details"     # with description
+tk list                         # list active tasks
+tk pick                         # interactive fzf picker (loops)
+tk show 42                      # view task details
+tk edit 42                      # open in $EDITOR
+tk done 42                      # mark done
+tk promote 42                   # advance status one step
+tk priority 42 p0               # set priority (p0/p1/p2)
+tk tag 42 code                  # add a tag
+tk archive 42                   # shelve task
+tk delete 42                    # delete permanently
+tk today                        # show 'now' tasks
+tk plan                         # fzf multi-select → move to now
+tk focus                        # print focus items
+tk next                         # next action per active task
+tk search "auth"                # search tasks
+tk review                       # batch-archive stale tasks
+tk export                       # markdown overview to stdout
+```
 
 ### Flags
 
 - `--json` — structured output (works on list, today, search)
-- `--inbox` — inbox only
+- `--inbox` — inbox items only
 - `--all` — include done/archived
 - `--stale` — stale tasks only
 - `--status <s>` — filter by status
 
-## Interactive picker (`tk pick`)
+## Interactive Picker
 
-Stays open after each action. Process multiple tasks without re-running.
+`tk pick` (alias `tk i`) opens an fzf picker that **loops** — after each action, it reloads and re-enters fzf. Process your whole list without re-running commands.
 
 | Key | Action |
 |-----|--------|
-| Enter | Edit in `$EDITOR` |
-| Tab | Multi-select |
-| Ctrl-P | Advance status |
-| Ctrl-D | Done |
-| Ctrl-A | Archive |
-| Ctrl-X | Delete |
-| Ctrl-R | Set priority |
-| ESC | Exit |
+| `Enter` | Edit in `$EDITOR` |
+| `Tab` | Multi-select |
+| `Ctrl-P` | Advance status |
+| `Ctrl-D` | Mark done |
+| `Ctrl-A` | Archive |
+| `Ctrl-X` | Delete |
+| `Ctrl-R` | Set priority |
+| `Esc` | Exit picker |
 
-## Task format
+## Task Format
+
+Each task lives at `<root>/NNN.md`:
 
 ```markdown
 ---
@@ -104,24 +129,65 @@ created: 2026-02-23T10:30:00-08:00
 updated: 2026-02-23T10:30:00-08:00
 ---
 
-Notes, links, whatever.
+Notes, links, whatever you want here.
 
-- [ ] First sub-task
-- [x] Completed sub-task
+- [ ] Write the migration script
+- [x] Test with staging data
+- [ ] Deploy to production
 ```
 
-Sub-tasks use standard markdown checkboxes. `tk next` shows the first unchecked one.
+Sub-tasks use standard markdown checkboxes. `tk next` shows the first unchecked one per task.
 
-## Typical workflow
+## Workflow
+
+**📥 Capture** (anytime)
+```sh
+tk add "fix the auth redirect loop"
+tk add "review Dani's PR" -d "PR #342"
+```
+
+**📋 Process inbox** (periodic)
+```sh
+tk list --inbox
+tk promote 42       # inbox → todo
+tk delete 43        # not useful
+```
+
+**📅 Plan the week**
+```sh
+tk plan             # fzf multi-select from todo/next → now
+```
+
+**🔥 Daily execution**
+```sh
+tk                  # dashboard
+tk pick             # work through tasks interactively
+```
+
+**🧹 Clean up**
+```sh
+tk review           # batch-archive stale tasks
+```
+
+## Dashboard
+
+Bare `tk` shows your daily view:
 
 ```
-tk add "thing"          # capture anytime
-tk list --inbox         # process inbox
-tk promote 42           # inbox → todo
+Focus
+  - Be nice
 
-tk plan                 # weekly: pick tasks for today
-tk                      # daily: see dashboard
-tk pick                 # work through tasks interactively
+Now (Mon Feb 24)
+  1. #42 Fix auth redirect loop
+  2. #51 Review Dani's PR
 
-tk review               # clean up stale stuff
+Next
+  #53 Write CDP test harness
+  #55 Update deployment docs
+
+Inbox: 3  Todo: 12  Next: 4  Now: 2  Done: 28
 ```
+
+---
+
+> This is a personal tool built for my own workflow. Sharing it in case it's useful — feel free to fork and adapt.
