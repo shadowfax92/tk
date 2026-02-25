@@ -13,9 +13,10 @@ var addNow bool
 var addNext bool
 
 var addCmd = &cobra.Command{
-	Use:   "add [title...]",
-	Short: "Add a task (defaults to inbox)",
-	Args:  cobra.MinimumNArgs(1),
+	Use:     "add [title...]",
+	Short:   "Add a task (defaults to inbox)",
+	Aliases: []string{"a"},
+	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		status := model.StatusInbox
 		if addNow {
