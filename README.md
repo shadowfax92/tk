@@ -85,6 +85,7 @@ tk edit 42                      # open in $EDITOR
 tk done 42                      # mark done
 tk promote 42                   # advance status one step
 tk priority 42 p0               # set priority (p0/p1/p2)
+tk p0 42                        # quick set priority p0 (also p1/p2)
 tk tag 42 code                  # add a tag
 tk archive 42                   # shelve task
 tk delete 42                    # delete permanently
