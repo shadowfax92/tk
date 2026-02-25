@@ -44,6 +44,16 @@ func Advance(current string) string {
 	return ""
 }
 
+// Demote returns the previous status in the natural flow, or "" if already at inbox.
+func Demote(current string) string {
+	for i, s := range StatusOrder {
+		if s == current && i > 0 {
+			return StatusOrder[i-1]
+		}
+	}
+	return ""
+}
+
 // IsActive returns true if the task is in a working state (not done/archived).
 func (t *Task) IsActive() bool {
 	return t.Status != StatusDone && t.Status != StatusArchived

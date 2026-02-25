@@ -47,7 +47,7 @@ func TaskLine(t *model.Task, staleWarnDays, staleCritDays int) string {
 
 	var tags string
 	if len(t.Tags) > 0 {
-		tags = " " + dimColor.Sprint("#"+strings.Join(t.Tags, " #"))
+		tags = " " + color.New(color.FgCyan, color.Faint).Sprint("#"+strings.Join(t.Tags, " #"))
 	}
 
 	var prio string
