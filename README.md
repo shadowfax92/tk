@@ -75,6 +75,7 @@ tk add "title" -d "details"     # with description
 tk add "title" --next           # add directly to next
 tk add "title" --now            # add directly to now
 tk list                         # list active tasks
+tk list --status done --sort updated --show-updated   # most recent done first, with updated age
 tk pick                         # interactive fzf picker (loops)
 tk show 42                      # view task details
 tk edit 42                      # open in $EDITOR
@@ -100,6 +101,9 @@ tk export                       # markdown overview to stdout
 - `--all` — include done/archived
 - `--stale` — stale tasks only
 - `--status <s>` — filter by status
+- `--sort <field>` — sort list by `id|created|updated|title|status|priority` (smart defaults per field)
+- `--desc` — reverse sort order for the selected field
+- `--show-updated` — append colored relative updated age (for example, `today`, `1 day ago`, `2 weeks ago`)
 
 ## Interactive Picker
 
