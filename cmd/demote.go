@@ -11,7 +11,7 @@ import (
 var demoteCmd = &cobra.Command{
 	Use:     "demote <id>",
 	Short:   "Move a task back to the previous status (done→now→next→todo→inbox)",
-	Aliases: []string{"dem"},
+	Aliases: []string{"dem", "b"},
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])

@@ -9,10 +9,10 @@ import (
 )
 
 var promoteCmd = &cobra.Command{
-	Use:   "promote <id>",
-	Short: "Advance a task to the next status (inbox→todo→next→now→done)",
-	Aliases: []string{"adv"},
-	Args:  cobra.ExactArgs(1),
+	Use:     "promote <id>",
+	Short:   "Advance a task to the next status (inbox→todo→next→now→done)",
+	Aliases: []string{"adv", "p"},
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {

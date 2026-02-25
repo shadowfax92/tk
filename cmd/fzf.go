@@ -24,8 +24,8 @@ func isInteractive() bool {
 	return fi.Mode()&os.ModeCharDevice != 0
 }
 
-var statusFilters = []string{"", model.StatusTodo, model.StatusNext, model.StatusNow}
-var statusFilterLabels = []string{"all", "todo", "next", "now"}
+var statusFilters = []string{"", model.StatusInbox, model.StatusTodo, model.StatusNext, model.StatusNow}
+var statusFilterLabels = []string{"all", "inbox", "todo", "next", "now"}
 
 // fzfPick runs a looping interactive fzf picker.
 // After each action, reloads tasks and re-enters fzf. ESC to exit.
