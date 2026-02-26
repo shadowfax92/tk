@@ -19,8 +19,8 @@ func dashboard() error {
 
 	bold := color.New(color.Bold)
 	dim := color.New(color.Faint)
-	focusHeadingColor := color.New(color.FgHiBlue, color.Bold)
-	focusItemColor := color.New(color.FgHiBlue)
+	focusHeadingColor := color.New(color.FgHiMagenta, color.Bold)
+	focusItemColor := color.New(color.FgHiMagenta)
 
 	// Focus
 	content, _ := st.ReadFocus()

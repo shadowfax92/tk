@@ -24,7 +24,7 @@ var (
 	boldColor  = color.New(color.Bold)
 	cyanColor  = color.New(color.FgCyan)
 	nowColor   = color.New(color.FgGreen, color.Bold)
-	focusColor = color.New(color.FgHiBlue)
+	focusColor = color.New(color.FgHiMagenta)
 )
 
 func statusColor(status string) *color.Color {
