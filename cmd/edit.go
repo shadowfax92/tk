@@ -5,11 +5,19 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
+	"github.com/nickhudkins/tk/model"
 	"github.com/spf13/cobra"
 )
 
 var editDue string
+var editStatus string
+
+var validStatuses = map[string]bool{
+	model.StatusInbox: true, model.StatusTodo: true, model.StatusNext: true,
+	model.StatusNow: true, model.StatusDone: true, model.StatusArchived: true,
+}
 
 var editCmd = &cobra.Command{
 	Use:         "edit <id>",
@@ -23,21 +31,33 @@ var editCmd = &cobra.Command{
 			return fmt.Errorf("invalid task ID: %s", args[0])
 		}
 
-		if editDue != "" {
+		if editStatus != "" && !validStatuses[editStatus] {
+			names := make([]string, 0, len(validStatuses))
+			for s := range validStatuses {
+				names = append(names, s)
+			}
+			return fmt.Errorf("invalid status %q (valid: %s)", editStatus, strings.Join(names, ", "))
+		}
+
+		if editDue != "" || editStatus != "" {
 			t, err := st.Get(id)
 			if err != nil {
 				return fmt.Errorf("task #%d not found", id)
 			}
-			due, err := parseDue(editDue)
-			if err != nil {
-				return err
+			if editDue != "" {
+				due, err := parseDue(editDue)
+				if err != nil {
+					return err
+				}
+				t.Due = due
+				fmt.Printf("#%d: due → %s\n", t.ID, due)
 			}
-			t.Due = due
-			if err := st.Save(t); err != nil {
-				return err
+			if editStatus != "" {
+				prev := t.Status
+				t.Status = editStatus
+				fmt.Printf("#%d: %s → %s (%s)\n", t.ID, prev, editStatus, t.Title)
 			}
-			fmt.Printf("Set #%d due → %s\n", t.ID, due)
-			return nil
+			return st.Save(t)
 		}
 
 		path := st.TaskFilePath(id)
@@ -56,5 +76,6 @@ var editCmd = &cobra.Command{
 
 func init() {
 	editCmd.Flags().StringVar(&editDue, "due", "", "Set due date (number of days or YYYY-MM-DD)")
+	editCmd.Flags().StringVarP(&editStatus, "status", "s", "", "Set status (inbox, todo, next, now, done, archived)")
 	rootCmd.AddCommand(editCmd)
 }
