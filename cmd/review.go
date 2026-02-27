@@ -4,19 +4,26 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/nickhudkins/tk/model"
 	"github.com/nickhudkins/tk/render"
 	"github.com/spf13/cobra"
 )
 
+var reviewDimColor = color.New(color.Faint)
+
 var reviewCmd = &cobra.Command{
-	Use:   "review",
-	Short:       "Review and clean up stale tasks",
+	Use:         "review",
+	Short:       "Review stale and backlog tasks",
 	Annotations: map[string]string{"group": "Organize:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tasks, err := st.List(func(t *model.Task) bool {
+			if t.Status == model.StatusBacklog {
+				return true
+			}
 			return t.IsActive() && t.DaysSinceUpdate() > cfg.StaleWarnDays
 		})
 		if err != nil {
@@ -24,21 +31,30 @@ var reviewCmd = &cobra.Command{
 		}
 
 		if len(tasks) == 0 {
-			fmt.Println("No stale tasks. You're clean!")
+			fmt.Println("Nothing to review. You're clean!")
 			return nil
 		}
 
-		fmt.Printf("Found %d stale tasks:\n\n", len(tasks))
+		sort.SliceStable(tasks, func(i, j int) bool {
+			return tasks[i].Created.Before(tasks[j].Created)
+		})
+
+		fmt.Printf("Found %d tasks to review:\n\n", len(tasks))
 
 		if !hasFzf() {
 			render.TaskList(tasks, cfg.StaleWarnDays, cfg.StaleCritDays)
-			fmt.Println("\nInstall fzf for interactive cleanup: brew install fzf")
+			fmt.Println("\nInstall fzf for interactive review: brew install fzf")
 			return nil
 		}
 
 		var lines []string
 		for _, t := range tasks {
-			line := fmt.Sprintf("%d\t%s", t.ID, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
+			age := fmt.Sprintf("%-14s", humanizeDaysAgo(t.AgeDays()))
+			line := fmt.Sprintf("%d\t%s %s",
+				t.ID,
+				reviewDimColor.Sprint(age),
+				render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays),
+			)
 			lines = append(lines, line)
 		}
 
@@ -48,9 +64,11 @@ var reviewCmd = &cobra.Command{
 		)
 
 		fzf := exec.Command("fzf", "--ansi", "--multi",
-			"--header", "Select stale tasks to ARCHIVE (TAB=multi-select, ENTER=confirm, ESC=skip)",
+			"--header", "enter:set-status  ^o:archive  ^x:delete  tab:multi  esc:quit",
+			"--header-first",
 			"--with-nth", "2..",
 			"--delimiter", "\t",
+			"--expect", "ctrl-o,ctrl-x",
 			"--preview", previewCmd,
 			"--preview-window", "right:50%:wrap",
 		)
@@ -63,80 +81,29 @@ var reviewCmd = &cobra.Command{
 			return nil
 		}
 
-		selected := strings.TrimSpace(string(out))
-		if selected == "" {
+		output := strings.TrimRight(string(out), "\n")
+		outputLines := strings.Split(output, "\n")
+		if len(outputLines) < 2 {
 			return nil
 		}
 
-		ids := extractIDs(strings.Split(selected, "\n"))
-		batchSetStatus(ids, model.StatusArchived, "Archived")
+		action := outputLines[0]
+		ids := extractIDs(outputLines[1:])
+		if len(ids) == 0 {
+			return nil
+		}
 
-		// Second pass: backlog triage
-		return reviewBacklog()
+		switch action {
+		case "ctrl-o":
+			batchSetStatus(ids, model.StatusArchived, "Archived")
+		case "ctrl-x":
+			batchDelete(ids)
+		default:
+			batchStatusPick(ids)
+		}
+
+		return nil
 	},
-}
-
-func reviewBacklog() error {
-	blTasks, err := st.List(func(t *model.Task) bool {
-		return t.Status == model.StatusBacklog
-	})
-	if err != nil {
-		return err
-	}
-	if len(blTasks) == 0 {
-		return nil
-	}
-
-	fmt.Printf("\nFound %d backlog tasks:\n\n", len(blTasks))
-
-	var lines []string
-	for _, t := range blTasks {
-		line := fmt.Sprintf("%d\t%s", t.ID, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
-		lines = append(lines, line)
-	}
-
-	previewCmd := fmt.Sprintf(
-		`cat "$(printf '%%s/%%03d.md' '%s' {1})" 2>/dev/null | tail -n +2`,
-		strings.ReplaceAll(st.Root, "'", "'\\''"),
-	)
-
-	fzf := exec.Command("fzf", "--ansi", "--multi",
-		"--header", "Backlog review: ENTER=promote to todo, ^O=archive, TAB=multi, ESC=skip",
-		"--with-nth", "2..",
-		"--delimiter", "\t",
-		"--expect", "ctrl-o",
-		"--preview", previewCmd,
-		"--preview-window", "right:50%:wrap",
-	)
-	fzf.Stdin = strings.NewReader(strings.Join(lines, "\n"))
-	fzf.Stderr = os.Stderr
-
-	out, err := fzf.Output()
-	if err != nil {
-		fmt.Println("Skipped backlog review.")
-		return nil
-	}
-
-	output := strings.TrimRight(string(out), "\n")
-	outputLines := strings.Split(output, "\n")
-	if len(outputLines) < 2 {
-		return nil
-	}
-
-	action := outputLines[0]
-	ids := extractIDs(outputLines[1:])
-	if len(ids) == 0 {
-		return nil
-	}
-
-	switch action {
-	case "ctrl-o":
-		batchSetStatus(ids, model.StatusArchived, "Archived")
-	default:
-		batchSetStatus(ids, model.StatusTodo, "Todo")
-	}
-
-	return nil
 }
 
 func init() {
