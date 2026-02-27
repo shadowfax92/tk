@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var nextCmd = &cobra.Command{
-	Use:         "next [id]",
-	Short:       "Show or set tasks with status 'next'",
-	Aliases:     []string{"n"},
+var nowCmd = &cobra.Command{
+	Use:         "now [id]",
+	Short:       "Show or set tasks with status 'now'",
+	Aliases:     []string{"today", "td"},
 	Annotations: map[string]string{"group": "Status:"},
 	Args:        cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -26,16 +26,16 @@ var nextCmd = &cobra.Command{
 				return fmt.Errorf("task #%d not found", id)
 			}
 			prev := t.Status
-			t.Status = model.StatusNext
+			t.Status = model.StatusNow
 			if err := st.Save(t); err != nil {
 				return err
 			}
-			fmt.Printf("#%d: %s → next (%s)\n", t.ID, prev, t.Title)
+			fmt.Printf("#%d: %s → now (%s)\n", t.ID, prev, t.Title)
 			return nil
 		}
 
 		tasks, err := st.List(func(t *model.Task) bool {
-			return t.Status == model.StatusNext
+			return t.Status == model.StatusNow
 		})
 		if err != nil {
 			return err
@@ -43,7 +43,7 @@ var nextCmd = &cobra.Command{
 		sortTasksByPriority(tasks)
 
 		if len(tasks) == 0 {
-			fmt.Println("No tasks in next. Promote tasks or add with `--next`.")
+			fmt.Println("No tasks for now. Run `tk plan` to pick from 'next'.")
 			return nil
 		}
 
@@ -51,7 +51,7 @@ var nextCmd = &cobra.Command{
 			return render.TaskJSON(tasks)
 		}
 
-		fmt.Println("🔜 Next:")
+		fmt.Println("🔥 Now:")
 		for i, t := range tasks {
 			fmt.Printf("  %d. %s\n", i+1, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
 		}
@@ -60,5 +60,5 @@ var nextCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(nextCmd)
+	rootCmd.AddCommand(nowCmd)
 }
