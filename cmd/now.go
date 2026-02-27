@@ -12,7 +12,7 @@ import (
 var nowCmd = &cobra.Command{
 	Use:         "now [id]",
 	Short:       "Show or set tasks with status 'now'",
-	Aliases:     []string{"today", "td"},
+	Aliases:     []string{"w", "today"},
 	Annotations: map[string]string{"group": "Status:"},
 	Args:        cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
