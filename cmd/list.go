@@ -15,6 +15,7 @@ import (
 
 var (
 	listInbox       bool
+	listBacklog     bool
 	listAll         bool
 	listStale       bool
 	listDue         bool
@@ -37,6 +38,9 @@ var listCmd = &cobra.Command{
 			if listInbox {
 				return t.Status == model.StatusInbox
 			}
+			if listBacklog {
+				return t.Status == model.StatusBacklog
+			}
 			if listStatus != "" {
 				return t.Status == listStatus
 			}
@@ -46,7 +50,6 @@ var listCmd = &cobra.Command{
 			if listDue {
 				return t.IsActive() && t.HasDue()
 			}
-			// Default: show all active (inbox, todo, next, now)
 			return t.IsActive()
 		}
 
@@ -158,12 +161,14 @@ func statusRank(status string) int {
 		return 1
 	case model.StatusTodo:
 		return 2
-	case model.StatusInbox:
+	case model.StatusBacklog:
 		return 3
-	case model.StatusDone:
+	case model.StatusInbox:
 		return 4
-	case model.StatusArchived:
+	case model.StatusDone:
 		return 5
+	case model.StatusArchived:
+		return 6
 	default:
 		return 99
 	}
@@ -271,6 +276,7 @@ func humanizeDaysAgo(days int) string {
 
 func init() {
 	listCmd.Flags().BoolVar(&listInbox, "inbox", false, "Show only inbox items")
+	listCmd.Flags().BoolVar(&listBacklog, "backlog", false, "Show only backlog items")
 	listCmd.Flags().BoolVar(&listAll, "all", false, "Show all including done/archived")
 	listCmd.Flags().BoolVar(&listStale, "stale", false, "Show stale tasks")
 	listCmd.Flags().BoolVar(&listDue, "due", false, "Show tasks with due dates, sorted nearest first")

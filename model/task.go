@@ -48,6 +48,7 @@ const (
 	StatusNow      = "now"
 	StatusDone     = "done"
 	StatusArchived = "archived"
+	StatusBacklog  = "backlog"
 )
 
 // StatusOrder defines the natural progression.
@@ -55,6 +56,9 @@ var StatusOrder = []string{StatusInbox, StatusTodo, StatusNext, StatusNow, Statu
 
 // Advance returns the next status in the natural flow, or "" if already terminal.
 func Advance(current string) string {
+	if current == StatusBacklog {
+		return StatusTodo
+	}
 	for i, s := range StatusOrder {
 		if s == current && i+1 < len(StatusOrder) {
 			return StatusOrder[i+1]
@@ -65,6 +69,9 @@ func Advance(current string) string {
 
 // Demote returns the previous status in the natural flow, or "" if already at inbox.
 func Demote(current string) string {
+	if current == StatusBacklog {
+		return ""
+	}
 	for i, s := range StatusOrder {
 		if s == current && i > 0 {
 			return StatusOrder[i-1]
@@ -73,9 +80,9 @@ func Demote(current string) string {
 	return ""
 }
 
-// IsActive returns true if the task is in a working state (not done/archived).
+// IsActive returns true if the task is in a working state (not done/archived/backlog).
 func (t *Task) IsActive() bool {
-	return t.Status != StatusDone && t.Status != StatusArchived
+	return t.Status != StatusDone && t.Status != StatusArchived && t.Status != StatusBacklog
 }
 
 func ParseFile(path string) (*Task, error) {

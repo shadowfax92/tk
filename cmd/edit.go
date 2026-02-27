@@ -17,6 +17,7 @@ var editStatus string
 var validStatuses = map[string]bool{
 	model.StatusInbox: true, model.StatusTodo: true, model.StatusNext: true,
 	model.StatusNow: true, model.StatusDone: true, model.StatusArchived: true,
+	model.StatusBacklog: true,
 }
 
 var editCmd = &cobra.Command{

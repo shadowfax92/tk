@@ -70,8 +70,73 @@ var reviewCmd = &cobra.Command{
 
 		ids := extractIDs(strings.Split(selected, "\n"))
 		batchSetStatus(ids, model.StatusArchived, "Archived")
-		return nil
+
+		// Second pass: backlog triage
+		return reviewBacklog()
 	},
+}
+
+func reviewBacklog() error {
+	blTasks, err := st.List(func(t *model.Task) bool {
+		return t.Status == model.StatusBacklog
+	})
+	if err != nil {
+		return err
+	}
+	if len(blTasks) == 0 {
+		return nil
+	}
+
+	fmt.Printf("\nFound %d backlog tasks:\n\n", len(blTasks))
+
+	var lines []string
+	for _, t := range blTasks {
+		line := fmt.Sprintf("%d\t%s", t.ID, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
+		lines = append(lines, line)
+	}
+
+	previewCmd := fmt.Sprintf(
+		`cat "$(printf '%%s/%%03d.md' '%s' {1})" 2>/dev/null | tail -n +2`,
+		strings.ReplaceAll(st.Root, "'", "'\\''"),
+	)
+
+	fzf := exec.Command("fzf", "--ansi", "--multi",
+		"--header", "Backlog review: ENTER=promote to todo, ^O=archive, TAB=multi, ESC=skip",
+		"--with-nth", "2..",
+		"--delimiter", "\t",
+		"--expect", "ctrl-o",
+		"--preview", previewCmd,
+		"--preview-window", "right:50%:wrap",
+	)
+	fzf.Stdin = strings.NewReader(strings.Join(lines, "\n"))
+	fzf.Stderr = os.Stderr
+
+	out, err := fzf.Output()
+	if err != nil {
+		fmt.Println("Skipped backlog review.")
+		return nil
+	}
+
+	output := strings.TrimRight(string(out), "\n")
+	outputLines := strings.Split(output, "\n")
+	if len(outputLines) < 2 {
+		return nil
+	}
+
+	action := outputLines[0]
+	ids := extractIDs(outputLines[1:])
+	if len(ids) == 0 {
+		return nil
+	}
+
+	switch action {
+	case "ctrl-o":
+		batchSetStatus(ids, model.StatusArchived, "Archived")
+	default:
+		batchSetStatus(ids, model.StatusTodo, "Todo")
+	}
+
+	return nil
 }
 
 func init() {

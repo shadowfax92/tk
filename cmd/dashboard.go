@@ -90,10 +90,10 @@ func dashboard() error {
 		}
 	}
 
-	dim.Printf("Inbox: %d  Todo: %d  Next: %d  Now: %d  Done: %d",
+	dim.Printf("Inbox: %d  Todo: %d  Next: %d  Now: %d  Done: %d  Backlog: %d",
 		counts[model.StatusInbox], counts[model.StatusTodo],
 		counts[model.StatusNext], counts[model.StatusNow],
-		counts[model.StatusDone])
+		counts[model.StatusDone], counts[model.StatusBacklog])
 	if stale > 0 {
 		color.New(color.FgYellow, color.Faint).Printf("  Stale: %d", stale)
 	}

@@ -41,6 +41,8 @@ func statusColor(status string) *color.Color {
 		return doneColor
 	case model.StatusArchived:
 		return dimColor
+	case model.StatusBacklog:
+		return dimColor
 	}
 	return color.New(color.Reset)
 }

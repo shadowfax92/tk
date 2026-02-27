@@ -26,8 +26,8 @@ func isInteractive() bool {
 	return fi.Mode()&os.ModeCharDevice != 0
 }
 
-var statusFilters = []string{"", model.StatusInbox, model.StatusTodo, model.StatusNext, model.StatusNow}
-var statusFilterLabels = []string{"all", "inbox", "todo", "next", "now"}
+var statusFilters = []string{"", model.StatusInbox, model.StatusTodo, model.StatusNext, model.StatusNow, model.StatusBacklog}
+var statusFilterLabels = []string{"all", "inbox", "todo", "next", "now", "backlog"}
 var pickerFilterLabelColor = color.New(color.FgYellow, color.Bold)
 
 // fzfPick runs a looping interactive fzf picker.
@@ -114,7 +114,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			tagLabel = "#" + currentTag
 		}
 		filterLabel := pickerFilterLabelColor.Sprintf("[status:%s tag:%s]", statusLabel, tagLabel)
-		header := fmt.Sprintf("%s  enter:edit  ^p:advance  ^b:demote  ^d:done  ^o:archive\n^x:delete  ^r:priority  ^t:add-tag  ^f:status  ^g:tag  tab:multi  esc:quit", filterLabel)
+		header := fmt.Sprintf("%s  enter:edit  ^s:set-status  ^d:done  ^o:archive  ^b:backlog\n^x:delete  ^r:priority  ^t:add-tag  ^f:filter  ^g:tag  tab:multi  esc:quit", filterLabel)
 
 		fzf := exec.Command("fzf",
 			"--ansi",
@@ -124,7 +124,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			"--delimiter", "\t",
 			"--header", header,
 			"--header-first",
-			"--expect", "ctrl-d,ctrl-p,ctrl-b,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f,ctrl-g",
+			"--expect", "ctrl-d,ctrl-e,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f,ctrl-g,ctrl-b",
 			"--preview", previewCmd,
 			"--preview-window", "right:50%:wrap",
 		)
@@ -172,14 +172,14 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 					}
 				}
 			}
-		case "ctrl-p":
-			batchAdvance(ids)
-		case "ctrl-b":
-			batchDemote(ids)
+		case "ctrl-e":
+			batchStatusPick(ids)
 		case "ctrl-d":
 			batchSetStatus(ids, model.StatusDone, "Done")
 		case "ctrl-o":
 			batchSetStatus(ids, model.StatusArchived, "Archived")
+		case "ctrl-b":
+			batchSetStatus(ids, model.StatusBacklog, "Backlog")
 		case "ctrl-x":
 			batchDelete(ids)
 		case "ctrl-r":
@@ -274,47 +274,43 @@ func editTask(id int) error {
 	return c.Run()
 }
 
-func batchDemote(ids []int) {
-	for _, id := range ids {
-		t, err := st.Get(id)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "skip #%d: not found\n", id)
-			continue
-		}
-		prev := model.Demote(t.Status)
-		if prev == "" {
-			fmt.Fprintf(os.Stderr, "skip #%d: already %s (can't demote)\n", id, t.Status)
-			continue
-		}
-		old := t.Status
-		t.Status = prev
-		if err := st.Save(t); err != nil {
-			fmt.Fprintf(os.Stderr, "skip #%d: %v\n", id, err)
-			continue
-		}
-		fmt.Printf("#%d: %s → %s (%s)\n", t.ID, old, prev, t.Title)
+func batchStatusPick(ids []int) {
+	if !hasFzf() {
+		return
 	}
-}
 
-func batchAdvance(ids []int) {
+	statuses := strings.Join(model.StatusOrder, "\n") + "\n" + model.StatusBacklog + "\n" + model.StatusArchived
+
+	fzf := exec.Command("fzf",
+		"--header", "Set status to:",
+		"--no-multi",
+	)
+	fzf.Stdin = strings.NewReader(statuses)
+	fzf.Stderr = os.Stderr
+
+	out, err := fzf.Output()
+	if err != nil {
+		return
+	}
+
+	status := strings.TrimSpace(string(out))
+	if status == "" {
+		return
+	}
+
 	for _, id := range ids {
 		t, err := st.Get(id)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "skip #%d: not found\n", id)
-			continue
-		}
-		next := model.Advance(t.Status)
-		if next == "" {
-			fmt.Fprintf(os.Stderr, "skip #%d: already %s (terminal)\n", id, t.Status)
 			continue
 		}
 		prev := t.Status
-		t.Status = next
+		t.Status = status
 		if err := st.Save(t); err != nil {
 			fmt.Fprintf(os.Stderr, "skip #%d: %v\n", id, err)
 			continue
 		}
-		fmt.Printf("#%d: %s → %s (%s)\n", t.ID, prev, next, t.Title)
+		fmt.Printf("#%d: %s → %s (%s)\n", t.ID, prev, status, t.Title)
 	}
 }
 

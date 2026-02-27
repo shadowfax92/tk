@@ -13,6 +13,7 @@ import (
 var addDesc string
 var addNow bool
 var addNext bool
+var addBacklog bool
 var addTags []string
 var addDue string
 
@@ -29,6 +30,9 @@ var addCmd = &cobra.Command{
 		}
 		if addNext {
 			status = model.StatusNext
+		}
+		if addBacklog {
+			status = model.StatusBacklog
 		}
 		tags := normalizeTags(addTags)
 
@@ -70,7 +74,8 @@ func init() {
 	addCmd.Flags().BoolVar(&addNext, "next", false, "Add task directly to next")
 	addCmd.Flags().StringSliceVar(&addTags, "tags", nil, "Add tag(s), e.g. --tags \"#cli,#x\" or --tags cli --tags x")
 	addCmd.Flags().StringVar(&addDue, "due", "", "Due date (number of days or YYYY-MM-DD)")
-	addCmd.MarkFlagsMutuallyExclusive("now", "next")
+	addCmd.Flags().BoolVar(&addBacklog, "backlog", false, "Add task directly to backlog")
+	addCmd.MarkFlagsMutuallyExclusive("now", "next", "backlog")
 	rootCmd.AddCommand(addCmd)
 }
 

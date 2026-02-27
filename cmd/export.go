@@ -30,6 +30,7 @@ var exportCmd = &cobra.Command{
 			{model.StatusNow, "Now"},
 			{model.StatusNext, "Next"},
 			{model.StatusTodo, "Todo"},
+			{model.StatusBacklog, "Backlog"},
 			{model.StatusInbox, "Inbox"},
 			{model.StatusDone, "Done"},
 			{model.StatusArchived, "Archived"},
