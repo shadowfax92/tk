@@ -49,7 +49,7 @@ var reviewCmd = &cobra.Command{
 
 		var lines []string
 		for _, t := range tasks {
-			age := fmt.Sprintf("%-14s", humanizeDaysAgo(t.AgeDays()))
+			age := fmt.Sprintf("%-10s", humanizeDaysAgo(t.AgeDays()))
 			line := fmt.Sprintf("%d\t%s %s",
 				t.ID,
 				reviewDimColor.Sprint(age),

@@ -40,16 +40,21 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 	filterIdx := 0
 	currentTag := ""
 
-	for {
-		baseFilter := func(t *model.Task) bool {
-			if filterFn != nil && !filterFn(t) {
-				return false
-			}
-			return true
-		}
+	// Pre-check: exit early if no tasks match the base filter at all.
+	allTasks, err := st.List(func(t *model.Task) bool {
+		return filterFn == nil || filterFn(t)
+	})
+	if err != nil {
+		return err
+	}
+	if len(allTasks) == 0 {
+		fmt.Println("No tasks.")
+		return nil
+	}
 
+	for {
 		statusScopedFilter := func(t *model.Task) bool {
-			if !baseFilter(t) {
+			if filterFn != nil && !filterFn(t) {
 				return false
 			}
 			if statusFilters[filterIdx] != "" {
@@ -83,20 +88,6 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			return err
 		}
 
-		if len(tasks) == 0 {
-			statusLabel := statusFilterLabels[filterIdx]
-			if currentTag != "" && statusFilters[filterIdx] != "" {
-				fmt.Printf("No %s tasks with #%s.\n", statusLabel, currentTag)
-			} else if currentTag != "" {
-				fmt.Printf("No tasks with #%s.\n", currentTag)
-			} else if statusFilters[filterIdx] != "" {
-				fmt.Printf("No %s tasks.\n", statusLabel)
-			} else {
-				fmt.Println("No tasks.")
-			}
-			return nil
-		}
-
 		var lines []string
 		for _, t := range tasks {
 			line := fmt.Sprintf("%d\t%s", t.ID, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
@@ -114,7 +105,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			tagLabel = "#" + currentTag
 		}
 		filterLabel := pickerFilterLabelColor.Sprintf("[status:%s tag:%s]", statusLabel, tagLabel)
-		header := fmt.Sprintf("%s  enter:edit  ^s:set-status  ^d:done  ^o:archive  ^b:backlog\n^x:delete  ^r:priority  ^t:add-tag  ^f:filter  ^g:tag  tab:multi  esc:quit", filterLabel)
+		header := fmt.Sprintf("%s  enter:edit  ^e:set-status  ^d:done  ^o:archive  ^b:backlog\n^x:delete  ^r:priority  ^t:add-tag  ^f:filter  ^g:tag  tab:multi  esc:quit", filterLabel)
 
 		fzf := exec.Command("fzf",
 			"--ansi",
@@ -132,12 +123,24 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 		fzf.Stderr = os.Stderr
 
 		out, err := fzf.Output()
+		output := strings.TrimRight(string(out), "\n")
+
 		if err != nil {
-			// ESC or ctrl-c — exit the loop
+			// fzf failed — but check if an expect key was pressed (e.g. on empty list)
+			if output != "" {
+				action := strings.Split(output, "\n")[0]
+				switch action {
+				case "ctrl-f":
+					filterIdx = (filterIdx + 1) % len(statusFilters)
+					continue
+				case "ctrl-g":
+					currentTag = nextTagFilter(tagFilters, currentTag)
+					continue
+				}
+			}
 			return nil
 		}
 
-		output := strings.TrimRight(string(out), "\n")
 		outputLines := strings.Split(output, "\n")
 		if len(outputLines) < 2 {
 			continue
