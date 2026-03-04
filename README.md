@@ -11,7 +11,7 @@
 Tasks as plain `.md` files with YAML frontmatter — readable in the CLI, Obsidian, and any text editor. No database, no sync, just files you can git track.
 
 - **Quick capture** — `tk add "thing"` drops it in inbox, `--now` or `--next` to skip ahead
-- **GTD status flow** — `inbox → todo → next → now → done`
+- **GTD status flow** — `inbox → todo → next → now → done` with `backlog` for someday items
 - **Due dates** — `tk add "ship it" --due 5` surfaces tasks automatically when deadlines approach
 - **Goals & focus** — track deadlines with progress bars, keep top-of-mind items visible
 - **Interactive picker** — fzf-powered loop to process tasks without re-running commands
@@ -50,11 +50,11 @@ tk
 
 ```
 inbox  →  todo  →  next  →  now  →  done
-                                      ↕
-                                  archived
+            ↕                         ↕
+         backlog                  archived
 ```
 
-`tk promote <id>` advances one step. `tk done <id>` jumps to done. `tk archive <id>` shelves from any status.
+`tk now <id>` / `tk next <id>` set status directly. `tk done <id>` marks done. `tk backlog <id>` parks for later.
 
 ## Commands
 
@@ -67,6 +67,7 @@ tk add "title" --due 2026-03-15 # due on specific date
 tk add "title" --now --tags cli # add to now with tags
 tk show 42                      # view task details
 tk edit 42                      # open in $EDITOR
+tk edit 42 -s next --due 3      # set status + due without editor
 tk copy 42                      # copy file path to clipboard
 tk delete 42                    # delete permanently
 ```
@@ -74,8 +75,9 @@ tk delete 42                    # delete permanently
 ### Status & Priority
 
 ```sh
-tk promote 42                   # advance one step (p)
-tk demote 42                    # go back one step (b)
+tk now 42                       # set to now (w)
+tk next 42                      # set to next (n)
+tk backlog 42                   # park for later (bl)
 tk done 42                      # mark done (d)
 tk archive 42                   # shelve task
 tk p0 42                        # set priority (p0/p1/p2)
@@ -89,8 +91,11 @@ tk list --due                   # tasks with due dates, nearest first
 tk list --status next           # filter by status
 tk list --stale                 # stale tasks
 tk list --sort priority --desc  # sort options: id|created|updated|title|status|priority
-tk today                        # today's tasks (t)
-tk next                         # next tasks (n)
+tk list --backlog               # backlog tasks
+tk now                          # show now tasks (w)
+tk next                         # show next tasks (n)
+tk backlog                      # show backlog tasks (bl)
+tk stats                        # status breakdown + trends
 tk actions                      # next action per task (v)
 tk search "auth"                # search by title/body (s)
 tk export                       # markdown overview
@@ -112,7 +117,7 @@ tk goals                        # show goals (g)
 tk goals edit                   # edit .goals.yaml
 tk tags                         # list tags with counts
 tk tags add 42 code             # tag a task
-tk review                       # clean up stale tasks
+tk review                       # review stale + backlog tasks
 ```
 
 ### Flags
@@ -159,16 +164,24 @@ Inbox: 3  Todo: 12  Next: 4  Now: 2  Done: 28
 |-----|--------|
 | `Enter` | Edit in $EDITOR |
 | `Tab` | Multi-select |
-| `Ctrl-P` | Advance status |
-| `Ctrl-B` | Demote status |
+| `Ctrl-E` | Set status (opens picker) |
 | `Ctrl-D` | Mark done |
 | `Ctrl-O` | Archive |
+| `Ctrl-B` | Move to backlog |
 | `Ctrl-X` | Delete |
 | `Ctrl-R` | Set priority |
 | `Ctrl-T` | Add tag |
 | `Ctrl-F` | Cycle status filter |
 | `Ctrl-G` | Cycle tag filter |
 | `Esc` | Exit |
+
+## Stats
+
+`tk stats` shows status distribution, completion and creation trends over the last 7 days, and health metrics.
+
+![tk stats](assets/stats.png)
+
+Use `--days 14` to extend the trend window.
 
 ## Task Format
 
