@@ -58,51 +58,68 @@ var projectAddCmd = &cobra.Command{
 	},
 }
 
-var projectNextCmd = &cobra.Command{
-	Use:   "next <slug>",
-	Short: "Set project status to next",
-	Args:  cobra.ExactArgs(1),
+var projectStatusCmd = &cobra.Command{
+	Use:   "status [slug]",
+	Short: "Set project status via fzf",
+	Aliases: []string{"s"},
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := st.UpdateProjectStatus(args[0], model.ProjectStatusNext); err != nil {
-			return err
+		var slug string
+		if len(args) == 1 {
+			slug = args[0]
+		} else {
+			picked, err := pickProjectFzf()
+			if err != nil {
+				return err
+			}
+			slug = picked
 		}
-		fmt.Printf("Project %s → next\n", args[0])
-		return nil
-	},
-}
 
-var projectDoneCmd = &cobra.Command{
-	Use:   "done <slug>",
-	Short: "Set project status to done",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := st.UpdateProjectStatus(args[0], model.ProjectStatusDone); err != nil {
-			return err
+		if !hasFzf() {
+			return fmt.Errorf("fzf is required. Install: brew install fzf")
 		}
-		fmt.Printf("Project %s → done\n", args[0])
-		return nil
-	},
-}
 
-var projectArchiveCmd = &cobra.Command{
-	Use:   "archive <slug>",
-	Short: "Archive a project",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := st.UpdateProjectStatus(args[0], model.ProjectStatusArchived); err != nil {
+		statuses := strings.Join([]string{
+			model.ProjectStatusTodo,
+			model.ProjectStatusNext,
+			model.ProjectStatusDone,
+			model.ProjectStatusArchived,
+		}, "\n")
+
+		fzf := exec.Command("fzf",
+			"--header", fmt.Sprintf("Set status for %s:", slug),
+			"--no-multi",
+		)
+		fzf.Stdin = strings.NewReader(statuses)
+		fzf.Stderr = os.Stderr
+
+		out, err := fzf.Output()
+		if err != nil {
+			return nil
+		}
+
+		status := strings.TrimSpace(string(out))
+		if err := st.UpdateProjectStatus(slug, status); err != nil {
 			return err
 		}
-		fmt.Printf("Project %s → archived\n", args[0])
+		fmt.Printf("Project %s → %s\n", slug, status)
 		return nil
 	},
 }
 
 var projectEditCmd = &cobra.Command{
-	Use:   "edit <slug>",
+	Use:   "edit [slug]",
 	Short: "Batch edit project tasks in your editor",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return editProject(args[0])
+		if len(args) == 1 {
+			return editProject(args[0])
+		}
+		slug, err := pickProjectFzf()
+		if err != nil {
+			return err
+		}
+		return editProject(slug)
 	},
 }
 
@@ -542,13 +559,52 @@ func tagsEqual(a, b []string) bool {
 	return true
 }
 
+func pickProjectFzf() (string, error) {
+	if !hasFzf() {
+		return "", fmt.Errorf("fzf is required. Install: brew install fzf")
+	}
+
+	projects, err := st.ReadProjects()
+	if err != nil {
+		return "", err
+	}
+	if len(projects) == 0 {
+		return "", fmt.Errorf("no projects. Create one with `tk project add <slug> <title>`")
+	}
+
+	var lines []string
+	for _, p := range projects {
+		if p.IsActive() {
+			lines = append(lines, fmt.Sprintf("%s\t%s [%s]", p.Slug, p.Title, p.Status))
+		}
+	}
+	if len(lines) == 0 {
+		return "", fmt.Errorf("no active projects")
+	}
+
+	fzf := exec.Command("fzf",
+		"--header", "Select project:",
+		"--no-multi",
+		"--with-nth", "1..",
+		"--delimiter", "\t",
+	)
+	fzf.Stdin = strings.NewReader(strings.Join(lines, "\n"))
+	fzf.Stderr = os.Stderr
+
+	out, err := fzf.Output()
+	if err != nil {
+		return "", fmt.Errorf("cancelled")
+	}
+
+	selected := strings.TrimSpace(string(out))
+	return strings.SplitN(selected, "\t", 2)[0], nil
+}
+
 func init() {
 	projectCmd.Flags().BoolVar(&projectAll, "all", false, "Include done/archived projects")
 	projectAddCmd.Flags().BoolVar(&projectAddNext, "next", false, "Create with status next")
 	projectCmd.AddCommand(projectAddCmd)
-	projectCmd.AddCommand(projectNextCmd)
-	projectCmd.AddCommand(projectDoneCmd)
-	projectCmd.AddCommand(projectArchiveCmd)
+	projectCmd.AddCommand(projectStatusCmd)
 	projectCmd.AddCommand(projectEditCmd)
 	rootCmd.AddCommand(projectCmd)
 }
