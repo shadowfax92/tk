@@ -108,8 +108,9 @@ var projectStatusCmd = &cobra.Command{
 }
 
 var projectEditCmd = &cobra.Command{
-	Use:   "edit [slug]",
-	Short: "Batch edit project tasks in your editor",
+	Use:     "edit [slug]",
+	Aliases: []string{"e"},
+	Short:   "Batch edit project tasks in your editor",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 1 {
