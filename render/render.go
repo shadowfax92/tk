@@ -124,15 +124,17 @@ func TaskLineWithDue(t *model.Task, staleWarnDays, staleCritDays, dueSoonDays in
 
 	sc := statusColor(t.Status)
 
+	proj := ProjectAnnotation(t.Project)
+
 	switch t.Status {
 	case model.StatusDone:
 		return fmt.Sprintf("%s %s %s", dimColor.Sprint(id), doneColor.Sprint(status), doneColor.Sprint(t.Title))
 	case model.StatusArchived:
 		return fmt.Sprintf("%s %s %s", dimColor.Sprint(id), dimColor.Sprint(status), dimColor.Sprint(t.Title))
 	case model.StatusNow:
-		return fmt.Sprintf("%s %s %s%s%s%s%s%s", nowColor.Sprint(id), nowColor.Sprint(status), boldColor.Sprint(t.Title), prio, tags, progress, stale, due)
+		return fmt.Sprintf("%s %s %s%s%s%s%s%s%s", nowColor.Sprint(id), nowColor.Sprint(status), boldColor.Sprint(t.Title), prio, tags, progress, stale, due, proj)
 	default:
-		return fmt.Sprintf("%s %s %s%s%s%s%s%s", sc.Sprint(id), sc.Sprint(status), t.Title, prio, tags, progress, stale, due)
+		return fmt.Sprintf("%s %s %s%s%s%s%s%s%s", sc.Sprint(id), sc.Sprint(status), t.Title, prio, tags, progress, stale, due, proj)
 	}
 }
 
@@ -155,6 +157,7 @@ func TaskJSON(tasks []*model.Task) error {
 		Status   string   `json:"status"`
 		Priority string   `json:"priority,omitempty"`
 		Tags     []string `json:"tags,omitempty"`
+		Project  string   `json:"project,omitempty"`
 		Created  string   `json:"created"`
 		Updated  string   `json:"updated"`
 		AgeDays  int      `json:"age_days"`
@@ -168,6 +171,7 @@ func TaskJSON(tasks []*model.Task) error {
 			Status:   t.Status,
 			Priority: t.Priority,
 			Tags:     t.Tags,
+			Project:  t.Project,
 			Created:  t.Created.Format("2006-01-02"),
 			Updated:  t.Updated.Format("2006-01-02"),
 			AgeDays:  t.AgeDays(),
@@ -286,4 +290,26 @@ func NextActions(tasks []*model.Task) {
 		id := fmt.Sprintf("#%-3d", t.ID)
 		fmt.Printf("%s %s → %s\n", boldColor.Sprint(id), t.Title, cyanColor.Sprint(action))
 	}
+}
+
+var projectColor = color.New(color.FgMagenta, color.Faint)
+
+func ProjectStatusColor(status string) *color.Color {
+	switch status {
+	case model.ProjectStatusNext:
+		return cyanColor
+	case model.ProjectStatusDone:
+		return doneColor
+	case model.ProjectStatusArchived:
+		return dimColor
+	default:
+		return color.New(color.FgWhite)
+	}
+}
+
+func ProjectAnnotation(project string) string {
+	if project == "" {
+		return ""
+	}
+	return "  " + projectColor.Sprintf("‹%s›", project)
 }

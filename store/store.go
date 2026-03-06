@@ -94,6 +94,10 @@ func (s *Store) AddWithStatusAndTags(title, body, status string, tags []string) 
 }
 
 func (s *Store) AddFull(title, body, status string, tags []string, due string) (*model.Task, error) {
+	return s.AddFullWithProject(title, body, status, tags, due, "")
+}
+
+func (s *Store) AddFullWithProject(title, body, status string, tags []string, due, project string) (*model.Task, error) {
 	if status == "" {
 		status = model.StatusInbox
 	}
@@ -110,6 +114,7 @@ func (s *Store) AddFull(title, body, status string, tags []string, due string) (
 		Status:  status,
 		Tags:    tags,
 		Due:     due,
+		Project: project,
 		Created: now,
 		Updated: now,
 		Body:    body,
@@ -208,4 +213,61 @@ func (s *Store) EnsureFocus() error {
 		return nil
 	}
 	return os.WriteFile(s.focusPath(), []byte("- [your focus here]\n"), 0644)
+}
+
+func (s *Store) projectsPath() string {
+	return filepath.Join(s.Root, ".projects.yaml")
+}
+
+func (s *Store) ReadProjects() ([]model.Project, error) {
+	return model.ParseProjects(s.projectsPath())
+}
+
+func (s *Store) SaveProjects(projects []model.Project) error {
+	return model.SaveProjects(s.projectsPath(), projects)
+}
+
+func (s *Store) GetProject(slug string) (*model.Project, error) {
+	projects, err := s.ReadProjects()
+	if err != nil {
+		return nil, err
+	}
+	for i := range projects {
+		if projects[i].Slug == slug {
+			return &projects[i], nil
+		}
+	}
+	return nil, fmt.Errorf("project %q not found", slug)
+}
+
+func (s *Store) AddProject(slug, title, status string) (*model.Project, error) {
+	projects, err := s.ReadProjects()
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range projects {
+		if p.Slug == slug {
+			return nil, fmt.Errorf("project %q already exists", slug)
+		}
+	}
+	if status == "" {
+		status = model.ProjectStatusTodo
+	}
+	p := model.Project{Slug: slug, Title: title, Status: status}
+	projects = append(projects, p)
+	return &p, s.SaveProjects(projects)
+}
+
+func (s *Store) UpdateProjectStatus(slug, status string) error {
+	projects, err := s.ReadProjects()
+	if err != nil {
+		return err
+	}
+	for i := range projects {
+		if projects[i].Slug == slug {
+			projects[i].Status = status
+			return s.SaveProjects(projects)
+		}
+	}
+	return fmt.Errorf("project %q not found", slug)
 }

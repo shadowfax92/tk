@@ -63,6 +63,39 @@ func dashboard() error {
 		fmt.Println()
 	}
 
+	// Active Projects
+	projects, _ := st.ReadProjects()
+	allTasksForProjects, _ := st.List(nil)
+	var activeProjects []model.Project
+	for _, p := range projects {
+		if p.Status == model.ProjectStatusNext {
+			activeProjects = append(activeProjects, p)
+		}
+	}
+	if len(activeProjects) > 0 {
+		projHeadingColor := color.New(color.FgMagenta, color.Bold)
+		projHeadingColor.Println("📋 Active Projects")
+		for _, p := range activeProjects {
+			nowC, nextC, todoC := 0, 0, 0
+			for _, t := range allTasksForProjects {
+				if t.Project != p.Slug {
+					continue
+				}
+				switch t.Status {
+				case model.StatusNow:
+					nowC++
+				case model.StatusNext:
+					nextC++
+				case model.StatusTodo, model.StatusInbox:
+					todoC++
+				}
+			}
+			counts := dim.Sprintf("(%d now, %d next, %d todo)", nowC, nextC, todoC)
+			fmt.Printf("  %-20s %s  %s\n", bold.Sprint(p.Slug), p.Title, counts)
+		}
+		fmt.Println()
+	}
+
 	// Now tasks
 	nowTasks, _ := st.List(func(t *model.Task) bool {
 		return t.Status == model.StatusNow

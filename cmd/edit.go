@@ -13,6 +13,8 @@ import (
 
 var editDue string
 var editStatus string
+var editProj string
+var editProjSet bool
 
 var validStatuses = map[string]bool{
 	model.StatusInbox: true, model.StatusTodo: true, model.StatusNext: true,
@@ -40,7 +42,9 @@ var editCmd = &cobra.Command{
 			return fmt.Errorf("invalid status %q (valid: %s)", editStatus, strings.Join(names, ", "))
 		}
 
-		if editDue != "" || editStatus != "" {
+		editProjSet = cmd.Flags().Changed("project")
+
+		if editDue != "" || editStatus != "" || editProjSet {
 			t, err := st.Get(id)
 			if err != nil {
 				return fmt.Errorf("task #%d not found", id)
@@ -57,6 +61,20 @@ var editCmd = &cobra.Command{
 				prev := t.Status
 				t.Status = editStatus
 				fmt.Printf("#%d: %s → %s (%s)\n", t.ID, prev, editStatus, t.Title)
+			}
+			if editProjSet {
+				if editProj != "" {
+					if _, err := st.GetProject(editProj); err != nil {
+						return fmt.Errorf("project %q not found", editProj)
+					}
+				}
+				prev := t.Project
+				t.Project = editProj
+				if editProj == "" {
+					fmt.Printf("#%d: removed from project %q\n", t.ID, prev)
+				} else {
+					fmt.Printf("#%d: project → %s\n", t.ID, editProj)
+				}
 			}
 			return st.Save(t)
 		}
@@ -78,5 +96,6 @@ var editCmd = &cobra.Command{
 func init() {
 	editCmd.Flags().StringVar(&editDue, "due", "", "Set due date (number of days or YYYY-MM-DD)")
 	editCmd.Flags().StringVarP(&editStatus, "status", "s", "", "Set status (inbox, todo, next, now, done, archived)")
+	editCmd.Flags().StringVarP(&editProj, "project", "P", "", "Set project (empty string to remove)")
 	rootCmd.AddCommand(editCmd)
 }

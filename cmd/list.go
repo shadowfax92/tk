@@ -23,6 +23,7 @@ var (
 	listSort        string
 	listDesc        bool
 	listShowUpdated bool
+	listProject     string
 )
 
 var listCmd = &cobra.Command{
@@ -32,6 +33,9 @@ var listCmd = &cobra.Command{
 	Annotations: map[string]string{"group": "Views:"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filter := func(t *model.Task) bool {
+			if listProject != "" && t.Project != listProject {
+				return false
+			}
 			if listAll {
 				return true
 			}
@@ -284,5 +288,6 @@ func init() {
 	listCmd.Flags().StringVar(&listSort, "sort", "id", "Sort by (id|created|updated|title|status|priority)")
 	listCmd.Flags().BoolVar(&listDesc, "desc", false, "Reverse sort order for selected field")
 	listCmd.Flags().BoolVar(&listShowUpdated, "show-updated", false, "Show updated date and relative age")
+	listCmd.Flags().StringVarP(&listProject, "project", "P", "", "Filter by project")
 	rootCmd.AddCommand(listCmd)
 }

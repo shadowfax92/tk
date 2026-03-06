@@ -17,6 +17,7 @@ type Task struct {
 	Priority string    `yaml:"priority,omitempty"`
 	Tags     []string  `yaml:"tags,omitempty"`
 	Due      string    `yaml:"due,omitempty"`
+	Project  string    `yaml:"project,omitempty"`
 	Created  time.Time `yaml:"created"`
 	Updated  time.Time `yaml:"updated"`
 

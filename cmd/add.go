@@ -21,6 +21,7 @@ var addBacklog bool
 var addTags []string
 var addDue string
 var addBulk bool
+var addProject string
 
 var addCmd = &cobra.Command{
 	Use:         "add [title...]",
@@ -55,13 +56,21 @@ var addCmd = &cobra.Command{
 		}
 
 		title := strings.Join(args, " ")
-		t, err := st.AddFull(title, addDesc, status, tags, due)
+		if addProject != "" {
+			if _, err := st.GetProject(addProject); err != nil {
+				return fmt.Errorf("project %q not found", addProject)
+			}
+		}
+		t, err := st.AddFullWithProject(title, addDesc, status, tags, due, addProject)
 		if err != nil {
 			return err
 		}
 		msg := fmt.Sprintf("Added #%d: %s [%s]", t.ID, t.Title, t.Status)
 		if t.HasDue() {
 			msg += fmt.Sprintf(" (due %s)", t.Due)
+		}
+		if t.Project != "" {
+			msg += fmt.Sprintf(" (%s)", t.Project)
 		}
 		fmt.Println(msg)
 		return nil
@@ -218,6 +227,7 @@ func init() {
 	addCmd.Flags().StringVar(&addDue, "due", "", "Due date (number of days or YYYY-MM-DD)")
 	addCmd.Flags().BoolVar(&addBacklog, "backlog", false, "Add task directly to backlog")
 	addCmd.Flags().BoolVar(&addBulk, "bulk", false, "Bulk add tasks via editor")
+	addCmd.Flags().StringVarP(&addProject, "project", "P", "", "Assign to project")
 	addCmd.MarkFlagsMutuallyExclusive("now", "next", "backlog")
 	rootCmd.AddCommand(addCmd)
 }

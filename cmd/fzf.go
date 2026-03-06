@@ -105,7 +105,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			tagLabel = "#" + currentTag
 		}
 		filterLabel := pickerFilterLabelColor.Sprintf("[status:%s tag:%s]", statusLabel, tagLabel)
-		header := fmt.Sprintf("%s  enter:edit  ^e:set-status  ^d:done  ^o:archive  ^b:backlog\n^x:delete  ^r:priority  ^t:add-tag  ^f:filter  ^g:tag  tab:multi  esc:quit", filterLabel)
+		header := fmt.Sprintf("%s  enter:edit  ^e:set-status  ^d:done  ^o:archive  ^b:backlog\n^x:delete  ^r:priority  ^t:add-tag  ^p:project  ^f:filter  ^g:tag  tab:multi  esc:quit", filterLabel)
 
 		fzf := exec.Command("fzf",
 			"--ansi",
@@ -115,7 +115,7 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			"--delimiter", "\t",
 			"--header", header,
 			"--header-first",
-			"--expect", "ctrl-d,ctrl-e,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f,ctrl-g,ctrl-b",
+			"--expect", "ctrl-d,ctrl-e,ctrl-o,ctrl-x,ctrl-r,ctrl-t,ctrl-f,ctrl-g,ctrl-b,ctrl-p",
 			"--preview", previewCmd,
 			"--preview-window", "right:50%:wrap",
 		)
@@ -189,6 +189,8 @@ func fzfPick(filterFn func(*model.Task) bool) error {
 			batchPriority(ids)
 		case "ctrl-t":
 			batchTag(ids)
+		case "ctrl-p":
+			batchProject(ids)
 		}
 
 		fmt.Println() // blank line before re-entering fzf
@@ -418,6 +420,62 @@ func batchTag(ids []int) {
 			continue
 		}
 		fmt.Printf("Tagged #%d with #%s\n", t.ID, tag)
+	}
+}
+
+func batchProject(ids []int) {
+	if !hasFzf() {
+		return
+	}
+
+	projects, err := st.ReadProjects()
+	if err != nil || len(projects) == 0 {
+		fmt.Println("No projects. Create one with `tk project add <slug> <title>`.")
+		return
+	}
+
+	var lines []string
+	lines = append(lines, "(none)")
+	for _, p := range projects {
+		if p.IsActive() {
+			lines = append(lines, fmt.Sprintf("%s\t%s [%s]", p.Slug, p.Title, p.Status))
+		}
+	}
+
+	fzf := exec.Command("fzf",
+		"--header", "Assign to project:",
+		"--no-multi",
+		"--with-nth", "1..",
+		"--delimiter", "\t",
+	)
+	fzf.Stdin = strings.NewReader(strings.Join(lines, "\n"))
+	fzf.Stderr = os.Stderr
+
+	out, err := fzf.Output()
+	if err != nil {
+		return
+	}
+
+	selected := strings.TrimSpace(string(out))
+	slug := strings.SplitN(selected, "\t", 2)[0]
+	if slug == "(none)" {
+		slug = ""
+	}
+
+	for _, id := range ids {
+		t, err := st.Get(id)
+		if err != nil {
+			continue
+		}
+		t.Project = slug
+		if err := st.Save(t); err != nil {
+			continue
+		}
+		if slug == "" {
+			fmt.Printf("#%d: removed from project (%s)\n", t.ID, t.Title)
+		} else {
+			fmt.Printf("#%d: → project %s (%s)\n", t.ID, slug, t.Title)
+		}
 	}
 }
 
