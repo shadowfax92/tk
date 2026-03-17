@@ -96,6 +96,9 @@ func dashboard() error {
 		fmt.Println()
 	}
 
+	// Daily note
+	dailyDashboard()
+
 	// Now tasks
 	nowTasks, _ := st.List(func(t *model.Task) bool {
 		return t.Status == model.StatusNow

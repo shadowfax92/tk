@@ -215,6 +215,54 @@ func (s *Store) EnsureFocus() error {
 	return os.WriteFile(s.focusPath(), []byte("- [your focus here]\n"), 0644)
 }
 
+func (s *Store) dailyDir() string {
+	return filepath.Join(s.Root, "daily")
+}
+
+func (s *Store) DailyDir() string {
+	return s.dailyDir()
+}
+
+func (s *Store) DailyPath(t time.Time) string {
+	return filepath.Join(s.dailyDir(), t.Format("2006-01-02-Mon")+".md")
+}
+
+func (s *Store) EnsureDailyDir() error {
+	return os.MkdirAll(s.dailyDir(), 0755)
+}
+
+func (s *Store) ReadDaily(t time.Time) (string, error) {
+	data, err := os.ReadFile(s.DailyPath(t))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return string(data), nil
+}
+
+func (s *Store) DailyExists(t time.Time) bool {
+	info, err := os.Stat(s.DailyPath(t))
+	if err != nil {
+		return false
+	}
+	return info.Size() > 0
+}
+
+func (s *Store) ListDailyFiles(days int) ([]string, error) {
+	today := time.Now()
+	var files []string
+	for i := days - 1; i >= 0; i-- {
+		day := today.AddDate(0, 0, -i)
+		path := s.DailyPath(day)
+		if _, err := os.Stat(path); err == nil {
+			files = append(files, path)
+		}
+	}
+	return files, nil
+}
+
 func (s *Store) projectsPath() string {
 	return filepath.Join(s.Root, ".projects.yaml")
 }
