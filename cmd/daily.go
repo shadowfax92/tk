@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/nickhudkins/tk/model"
 	"github.com/spf13/cobra"
 )
 
@@ -149,41 +148,10 @@ func parseDay(s string) (time.Time, error) {
 
 func generateDailyTemplate(day time.Time) (string, error) {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("# %s\n\n", day.Format("Mon Jan 2, 2006")))
-
-	// Now tasks
-	nowTasks, err := st.List(func(t *model.Task) bool {
-		return t.Status == model.StatusNow
-	})
-	if err == nil && len(nowTasks) > 0 {
-		sortTasksByPriority(nowTasks)
-		b.WriteString("## Now\n")
-		for _, t := range nowTasks {
-			b.WriteString(fmt.Sprintf("- #%d %s", t.ID, t.Title))
-			if t.Priority != "" {
-				b.WriteString(" " + t.Priority)
-			}
-			if t.Project != "" {
-				b.WriteString(fmt.Sprintf(" <%s>", t.Project))
-			}
-			b.WriteString("\n")
-		}
-		b.WriteString("\n")
-	}
-
-	// Overdue tasks
-	overdue, err := st.List(func(t *model.Task) bool {
-		return t.IsActive() && t.HasDue() && t.DaysUntilDue() < 0
-	})
-	if err == nil && len(overdue) > 0 {
-		b.WriteString("## Overdue\n")
-		for _, t := range overdue {
-			b.WriteString(fmt.Sprintf("- #%d %s (overdue %dd)\n", t.ID, t.Title, -t.DaysUntilDue()))
-		}
-		b.WriteString("\n")
-	}
-
+	b.WriteString(fmt.Sprintf("# %s, %s\n\n", day.Format("January 2"), day.Format("Monday")))
+	b.WriteString("## Tasks\n\n")
 	b.WriteString("## Notes\n\n")
+	b.WriteString("## Exercise\n> Do graham weaver to set the goals\n")
 
 	return b.String(), nil
 }
@@ -191,7 +159,7 @@ func generateDailyTemplate(day time.Time) (string, error) {
 func isTemplateUnchanged(content string) bool {
 	for _, line := range strings.Split(content, "\n") {
 		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "- #") {
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ">") {
 			continue
 		}
 		return false
@@ -211,26 +179,32 @@ func dailyDashboard() {
 	}
 
 	content, _ := st.ReadDaily(time.Now())
-	headingColor.Println("📝 Daily")
 
+	// Collect checkbox tasks
+	var tasks []string
+	total, done := 0, 0
 	scanner := bufio.NewScanner(strings.NewReader(content))
-	shown := 0
 	for scanner.Scan() {
-		line := scanner.Text()
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "# ") {
-			continue
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "- [x] ") || strings.HasPrefix(line, "- [X] ") {
+			total++
+			done++
+			tasks = append(tasks, line)
+		} else if strings.HasPrefix(line, "- [ ] ") {
+			total++
+			tasks = append(tasks, line)
 		}
-		if strings.HasPrefix(trimmed, "## ") {
-			color.New(color.Bold).Printf("  %s\n", trimmed)
-		} else {
-			fmt.Printf("  %s\n", trimmed)
+	}
+
+	if total > 0 {
+		headingColor.Printf("📝 Daily  ")
+		dim.Printf("[%d/%d]\n", done, total)
+		for _, t := range tasks {
+			fmt.Printf("  %s\n", t)
 		}
-		shown++
-		if shown >= 5 {
-			dim.Println("  ...")
-			break
-		}
+	} else {
+		headingColor.Printf("📝 Daily  ")
+		dim.Println("no tasks yet")
 	}
 
 	fmt.Println()
