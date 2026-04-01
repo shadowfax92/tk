@@ -32,9 +32,7 @@ var weeklyCmd = &cobra.Command{
 		}
 
 		path := st.WeeklyPath(day)
-		isNew := false
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			isNew = true
 			template := generateWeeklyTemplate(day)
 			if err := os.WriteFile(path, []byte(template), 0644); err != nil {
 				return err
@@ -45,19 +43,7 @@ var weeklyCmd = &cobra.Command{
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		if err := c.Run(); err != nil {
-			return err
-		}
-
-		if isNew {
-			data, _ := os.ReadFile(path)
-			if isTemplateUnchanged(string(data)) {
-				os.Remove(path)
-				fmt.Println("Empty weekly note removed.")
-			}
-		}
-
-		return nil
+		return c.Run()
 	},
 }
 
