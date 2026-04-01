@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"time"
@@ -22,9 +21,7 @@ var tomorrowCmd = &cobra.Command{
 		}
 
 		path := st.DailyPath(day)
-		isNew := false
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			isNew = true
 			template, err := generateDailyTemplate(day)
 			if err != nil {
 				return err
@@ -38,19 +35,7 @@ var tomorrowCmd = &cobra.Command{
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		if err := c.Run(); err != nil {
-			return err
-		}
-
-		if isNew {
-			data, _ := os.ReadFile(path)
-			if isTemplateUnchanged(string(data)) {
-				os.Remove(path)
-				fmt.Println("Empty daily note removed.")
-			}
-		}
-
-		return nil
+		return c.Run()
 	},
 }
 

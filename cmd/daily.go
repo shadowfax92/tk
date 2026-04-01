@@ -33,9 +33,7 @@ var dailyCmd = &cobra.Command{
 		}
 
 		path := st.DailyPath(day)
-		isNew := false
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			isNew = true
 			template, err := generateDailyTemplate(day)
 			if err != nil {
 				return err
@@ -49,20 +47,7 @@ var dailyCmd = &cobra.Command{
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		if err := c.Run(); err != nil {
-			return err
-		}
-
-		// If new and user left it empty/unchanged, clean up
-		if isNew {
-			data, _ := os.ReadFile(path)
-			if isTemplateUnchanged(string(data)) {
-				os.Remove(path)
-				fmt.Println("Empty daily note removed.")
-			}
-		}
-
-		return nil
+		return c.Run()
 	},
 }
 
@@ -151,22 +136,11 @@ func parseDay(s string) (time.Time, error) {
 func generateDailyTemplate(day time.Time) (string, error) {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("# %s, %s\n\n", day.Format("January 2"), day.Format("Monday")))
-	b.WriteString("## Tasks\n\n")
+	b.WriteString("## Tasks\n- [ ] \n- [ ] \n- [ ] \n\n")
 	b.WriteString("## Notes\n\n")
 	b.WriteString("## Exercise\n> Do graham weaver to set the goals\n")
 
 	return b.String(), nil
-}
-
-func isTemplateUnchanged(content string) bool {
-	for _, line := range strings.Split(content, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ">") {
-			continue
-		}
-		return false
-	}
-	return true
 }
 
 func dailyDashboard() {
