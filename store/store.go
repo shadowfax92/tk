@@ -263,6 +263,38 @@ func (s *Store) ListDailyFiles(days int) ([]string, error) {
 	return files, nil
 }
 
+func (s *Store) weeklyDir() string {
+	return filepath.Join(s.Root, "weekly")
+}
+
+func (s *Store) WeeklyPath(t time.Time) string {
+	year, week := t.ISOWeek()
+	return filepath.Join(s.weeklyDir(), fmt.Sprintf("%d-W%02d.md", year, week))
+}
+
+func (s *Store) EnsureWeeklyDir() error {
+	return os.MkdirAll(s.weeklyDir(), 0755)
+}
+
+func (s *Store) WeeklyExists(t time.Time) bool {
+	info, err := os.Stat(s.WeeklyPath(t))
+	if err != nil {
+		return false
+	}
+	return info.Size() > 0
+}
+
+func (s *Store) ReadWeekly(t time.Time) (string, error) {
+	data, err := os.ReadFile(s.WeeklyPath(t))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return string(data), nil
+}
+
 func (s *Store) projectsPath() string {
 	return filepath.Join(s.Root, ".projects.yaml")
 }
