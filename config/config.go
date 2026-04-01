@@ -17,6 +17,10 @@ type Config struct {
 	FocusItems    int    `yaml:"focus_items"`
 	DueSoonDays   int    `yaml:"due_soon_days"`
 	Demo          bool   `yaml:"demo"`
+	MaxNow        int    `yaml:"max_now"`
+	MaxNext       int    `yaml:"max_next"`
+	NowStaleDays  int    `yaml:"now_stale_days"`
+	NextStaleDays int    `yaml:"next_stale_days"`
 }
 
 var DefaultConfig = Config{
@@ -27,6 +31,10 @@ var DefaultConfig = Config{
 	FocusItems:    3,
 	DueSoonDays:   3,
 	Demo:          false,
+	MaxNow:        5,
+	MaxNext:       5,
+	NowStaleDays:  5,
+	NextStaleDays: 14,
 }
 
 func configPath() string {
@@ -68,6 +76,18 @@ func Load() (*Config, error) {
 	}
 	if cfg.DueSoonDays <= 0 {
 		cfg.DueSoonDays = 3
+	}
+	if cfg.MaxNow < 0 {
+		cfg.MaxNow = 0
+	}
+	if cfg.MaxNext < 0 {
+		cfg.MaxNext = 0
+	}
+	if cfg.NowStaleDays <= 0 {
+		cfg.NowStaleDays = 5
+	}
+	if cfg.NextStaleDays <= 0 {
+		cfg.NextStaleDays = 14
 	}
 
 	return &cfg, nil

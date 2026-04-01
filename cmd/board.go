@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/nickhudkins/tk/model"
 	"github.com/spf13/cobra"
 )
@@ -256,6 +257,18 @@ func applyBoardEdits(_ []*model.Task, edited string) error {
 		}
 	}
 
+	for _, status := range []string{model.StatusNow, model.StatusNext} {
+		count, _ := countByStatus(status)
+		var limit int
+		if status == model.StatusNow {
+			limit = cfg.MaxNow
+		} else {
+			limit = cfg.MaxNext
+		}
+		if limit > 0 && count > limit {
+			color.New(color.FgYellow).Printf("⚠ %s has %d tasks (limit: %d)\n", status, count, limit)
+		}
+	}
 	printBoardSummary(created, moved, updated, deleted)
 	return nil
 }

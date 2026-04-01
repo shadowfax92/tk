@@ -17,6 +17,8 @@ func dashboard() error {
 		return nil
 	}
 
+	autoDemoteStale()
+
 	bold := color.New(color.Bold)
 	dim := color.New(color.Faint)
 	focusHeadingColor := color.New(color.FgHiMagenta, color.Bold)
@@ -105,7 +107,11 @@ func dashboard() error {
 	})
 	sortTasksByPriority(nowTasks)
 
-	bold.Printf("🔥 Now (%s)\n", time.Now().Format("Mon Jan 2"))
+	if cfg.MaxNow > 0 {
+		bold.Printf("🔥 Now [%d/%d] (%s)\n", len(nowTasks), cfg.MaxNow, time.Now().Format("Mon Jan 2"))
+	} else {
+		bold.Printf("🔥 Now (%s)\n", time.Now().Format("Mon Jan 2"))
+	}
 	if len(nowTasks) == 0 {
 		dim.Println("  No tasks for now. Run `tk plan` to pick from next.")
 	} else {
@@ -114,6 +120,24 @@ func dashboard() error {
 		}
 	}
 	fmt.Println()
+
+	// Next tasks
+	nextTasks, _ := st.List(func(t *model.Task) bool {
+		return t.Status == model.StatusNext
+	})
+	if len(nextTasks) > 0 {
+		sortTasksByPriority(nextTasks)
+		cyanBold := color.New(color.FgCyan, color.Bold)
+		if cfg.MaxNext > 0 {
+			cyanBold.Printf("🔜 Next [%d/%d]\n", len(nextTasks), cfg.MaxNext)
+		} else {
+			cyanBold.Println("🔜 Next")
+		}
+		for i, t := range nextTasks {
+			fmt.Printf("  %d. %s\n", i+1, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays))
+		}
+		fmt.Println()
+	}
 
 	// Counts
 	all, _ := st.List(nil)

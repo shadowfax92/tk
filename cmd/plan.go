@@ -28,6 +28,12 @@ var planCmd = &cobra.Command{
 			return nil
 		}
 
+		remaining := wipRemaining(model.StatusNow)
+		if remaining == 0 {
+			fmt.Println("Now is full. Finish or demote tasks before planning more.")
+			return nil
+		}
+
 		if !hasFzf() {
 			return fmt.Errorf("fzf required for `tk plan`. Install: brew install fzf")
 		}
@@ -64,6 +70,10 @@ var planCmd = &cobra.Command{
 		}
 
 		ids := extractIDs(strings.Split(selected, "\n"))
+		if remaining > 0 && len(ids) > remaining {
+			fmt.Printf("WIP limit: only moving %d of %d selected (Now: %d/%d)\n", remaining, len(ids), cfg.MaxNow-remaining, cfg.MaxNow)
+			ids = ids[:remaining]
+		}
 		count := 0
 		for _, id := range ids {
 			t, err := st.Get(id)
