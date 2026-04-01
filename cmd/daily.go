@@ -116,6 +116,8 @@ func parseDay(s string) (time.Time, error) {
 		return today, nil
 	case "yesterday", "yday":
 		return today.AddDate(0, 0, -1), nil
+	case "tomorrow", "tmrw":
+		return today.AddDate(0, 0, 1), nil
 	}
 
 	// Try YYYY-MM-DD
