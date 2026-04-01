@@ -303,6 +303,21 @@ func batchStatusPick(ids []int) {
 		return
 	}
 
+	if cfg.HardLimit && (status == model.StatusNow || status == model.StatusNext) {
+		needed := 0
+		for _, id := range ids {
+			if t, err := st.Get(id); err == nil && t.Status != status {
+				needed++
+			}
+		}
+		if needed > 0 {
+			if err := enforceHardLimit(status, needed); err != nil {
+				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				return
+			}
+		}
+	}
+
 	for _, id := range ids {
 		t, err := st.Get(id)
 		if err != nil {
@@ -321,14 +336,21 @@ func batchStatusPick(ids []int) {
 
 func batchSetStatus(ids []int, status, label string) {
 	if status == model.StatusNow || status == model.StatusNext {
-		remaining := wipRemaining(status)
-		if remaining == 0 {
-			fmt.Printf("%s is full — finish or demote tasks first.\n", status)
-			return
-		}
-		if remaining > 0 && len(ids) > remaining {
-			fmt.Printf("WIP limit: only moving %d of %d selected\n", remaining, len(ids))
-			ids = ids[:remaining]
+		if cfg.HardLimit {
+			if err := enforceHardLimit(status, len(ids)); err != nil {
+				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				return
+			}
+		} else {
+			remaining := wipRemaining(status)
+			if remaining == 0 {
+				fmt.Printf("%s is full — finish or demote tasks first.\n", status)
+				return
+			}
+			if remaining > 0 && len(ids) > remaining {
+				fmt.Printf("WIP limit: only moving %d of %d selected\n", remaining, len(ids))
+				ids = ids[:remaining]
+			}
 		}
 	}
 	for _, id := range ids {

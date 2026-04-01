@@ -19,6 +19,7 @@ type Config struct {
 	Demo          bool   `yaml:"demo"`
 	MaxNow        int    `yaml:"max_now"`
 	MaxNext       int    `yaml:"max_next"`
+	HardLimit     bool   `yaml:"hard_limit"`
 	NowStaleDays  int    `yaml:"now_stale_days"`
 	NextStaleDays int    `yaml:"next_stale_days"`
 }

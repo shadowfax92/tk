@@ -70,7 +70,11 @@ var planCmd = &cobra.Command{
 		}
 
 		ids := extractIDs(strings.Split(selected, "\n"))
-		if remaining > 0 && len(ids) > remaining {
+		if cfg.HardLimit {
+			if err := enforceHardLimit(model.StatusNow, len(ids)); err != nil {
+				return err
+			}
+		} else if remaining > 0 && len(ids) > remaining {
 			fmt.Printf("WIP limit: only moving %d of %d selected (Now: %d/%d)\n", remaining, len(ids), cfg.MaxNow-remaining, cfg.MaxNow)
 			ids = ids[:remaining]
 		}

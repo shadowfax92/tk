@@ -257,16 +257,22 @@ func applyBoardEdits(_ []*model.Task, edited string) error {
 		}
 	}
 
-	for _, status := range []string{model.StatusNow, model.StatusNext} {
-		count, _ := countByStatus(status)
-		var limit int
-		if status == model.StatusNow {
-			limit = cfg.MaxNow
-		} else {
-			limit = cfg.MaxNext
+	if cfg.HardLimit {
+		for _, status := range []string{model.StatusNow, model.StatusNext} {
+			enforceHardLimit(status, 0)
 		}
-		if limit > 0 && count > limit {
-			color.New(color.FgYellow).Printf("⚠ %s has %d tasks (limit: %d)\n", status, count, limit)
+	} else {
+		for _, status := range []string{model.StatusNow, model.StatusNext} {
+			count, _ := countByStatus(status)
+			var limit int
+			if status == model.StatusNow {
+				limit = cfg.MaxNow
+			} else {
+				limit = cfg.MaxNext
+			}
+			if limit > 0 && count > limit {
+				color.New(color.FgYellow).Printf("⚠ %s has %d tasks (limit: %d)\n", status, count, limit)
+			}
 		}
 	}
 	printBoardSummary(created, moved, updated, deleted)

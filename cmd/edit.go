@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/nickhudkins/tk/model"
+	"github.com/nickhudkins/tk/render"
 	"github.com/spf13/cobra"
 )
 
@@ -27,8 +28,12 @@ var editCmd = &cobra.Command{
 	Short:       "Open a task in your editor",
 	Aliases:     []string{"e"},
 	Annotations: map[string]string{"group": "Tasks:"},
-	Args:        cobra.ExactArgs(1),
+	Args:        cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fzfEdit()
+		}
+
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
 			return fmt.Errorf("invalid task ID: %s", args[0])
@@ -91,6 +96,57 @@ var editCmd = &cobra.Command{
 		c.Stderr = os.Stderr
 		return c.Run()
 	},
+}
+
+func fzfEdit() error {
+	if !hasFzf() {
+		return fmt.Errorf("fzf is required for edit without ID. Install: brew install fzf")
+	}
+
+	tasks, err := st.List(func(t *model.Task) bool {
+		return t.Status != model.StatusDone && t.Status != model.StatusArchived
+	})
+	if err != nil {
+		return err
+	}
+	if len(tasks) == 0 {
+		fmt.Println("No tasks.")
+		return nil
+	}
+
+	var lines []string
+	for _, t := range tasks {
+		lines = append(lines, fmt.Sprintf("%d\t%s", t.ID, render.TaskLine(t, cfg.StaleWarnDays, cfg.StaleCritDays)))
+	}
+
+	previewCmd := fmt.Sprintf(
+		`cat "$(printf '%%s/%%03d.md' '%s' {1})" 2>/dev/null | tail -n +2`,
+		strings.ReplaceAll(st.Root, "'", "'\\''"),
+	)
+
+	fzf := exec.Command("fzf",
+		"--ansi",
+		"--no-multi",
+		"--with-nth", "2..",
+		"--delimiter", "\t",
+		"--header", "Select task to edit",
+		"--preview", previewCmd,
+		"--preview-window", "right:50%:wrap",
+	)
+	fzf.Stdin = strings.NewReader(strings.Join(lines, "\n"))
+	fzf.Stderr = os.Stderr
+
+	out, err := fzf.Output()
+	if err != nil {
+		return nil
+	}
+
+	ids := extractIDs(strings.Split(strings.TrimSpace(string(out)), "\n"))
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return editTask(ids[0])
 }
 
 func init() {
