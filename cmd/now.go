@@ -26,6 +26,11 @@ var nowCmd = &cobra.Command{
 				return fmt.Errorf("task #%d not found", id)
 			}
 			prev := t.Status
+			if prev != model.StatusNow {
+				if err := checkWIPLimit(model.StatusNow); err != nil {
+					return err
+				}
+			}
 			t.Status = model.StatusNow
 			if err := st.Save(t); err != nil {
 				return err

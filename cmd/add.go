@@ -55,6 +55,12 @@ var addCmd = &cobra.Command{
 			return err
 		}
 
+		if status == model.StatusNow || status == model.StatusNext {
+			if err := checkWIPLimit(status); err != nil {
+				return err
+			}
+		}
+
 		title := strings.Join(args, " ")
 		if addProject != "" {
 			if _, err := st.GetProject(addProject); err != nil {

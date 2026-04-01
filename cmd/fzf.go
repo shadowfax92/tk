@@ -320,6 +320,17 @@ func batchStatusPick(ids []int) {
 }
 
 func batchSetStatus(ids []int, status, label string) {
+	if status == model.StatusNow || status == model.StatusNext {
+		remaining := wipRemaining(status)
+		if remaining == 0 {
+			fmt.Printf("%s is full — finish or demote tasks first.\n", status)
+			return
+		}
+		if remaining > 0 && len(ids) > remaining {
+			fmt.Printf("WIP limit: only moving %d of %d selected\n", remaining, len(ids))
+			ids = ids[:remaining]
+		}
+	}
 	for _, id := range ids {
 		t, err := st.Get(id)
 		if err != nil {
