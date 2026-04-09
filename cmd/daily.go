@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -53,11 +54,10 @@ var dailyCmd = &cobra.Command{
 
 var dailyWeekCmd = &cobra.Command{
 	Use:   "week",
-	Short: "Show last 7 days of daily notes",
+	Short: "Open last 7 days of daily notes in $EDITOR",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dim := color.New(color.Faint)
-		bold := color.New(color.Bold)
 		today := time.Now()
+		var b strings.Builder
 		found := 0
 
 		for i := 6; i >= 0; i-- {
@@ -71,24 +71,27 @@ var dailyWeekCmd = &cobra.Command{
 			if i == 0 {
 				label += " (today)"
 			}
-			bold.Printf("── %s ──\n", label)
-			// Print non-empty lines, skip comment-only lines at top
-			scanner := bufio.NewScanner(strings.NewReader(content))
-			for scanner.Scan() {
-				line := scanner.Text()
-				if strings.HasPrefix(strings.TrimSpace(line), "#") && strings.HasPrefix(line, "# ") {
-					bold.Println(line)
-				} else {
-					fmt.Println(line)
-				}
-			}
-			dim.Println()
+			b.WriteString(fmt.Sprintf("── %s ──\n", label))
+			b.WriteString(strings.TrimRight(content, "\n"))
+			b.WriteString("\n\n")
 		}
 
 		if found == 0 {
 			fmt.Println("No daily notes in the last 7 days.")
+			return nil
 		}
-		return nil
+
+		tmpFile := filepath.Join(os.TempDir(), fmt.Sprintf("tk-daily-week-%s.md", today.Format("20060102")))
+		if err := os.WriteFile(tmpFile, []byte(b.String()), 0644); err != nil {
+			return err
+		}
+		defer os.Remove(tmpFile)
+
+		c := exec.Command(cfg.Editor, tmpFile)
+		c.Stdin = os.Stdin
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		return c.Run()
 	},
 }
 
